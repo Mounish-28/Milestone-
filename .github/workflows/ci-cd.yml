@@ -1,0 +1,140 @@
+name: ShopSense CI/CD Pipeline - Milestones 4 & 5
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Lint & Code Style Checks
+  # -------------------------------------------------------------
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install flake8 linter
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      - name: Run code linter
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 app backend customer-backend --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings
+          flake8 app backend customer-backend --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics
+
+  # -------------------------------------------------------------
+  # Job 2: Automated Pytest Suite (Milestones 1 to 5)
+  # -------------------------------------------------------------
+  test-backend:
+    name: Backend Pytest Automated Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx langgraph
+
+      - name: Execute Pytest Test Suite
+        run: |
+          python -m pytest tests/ -v --junitxml=test-results.xml
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: test-results.xml
+
+  # -------------------------------------------------------------
+  # Job 3: Frontend Build Verification
+  # -------------------------------------------------------------
+  build-frontend:
+    name: Frontend Build & Asset Compilation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install and Build Admin Frontend
+        run: |
+          npm --prefix frontend install
+          npm --prefix frontend run build
+
+      - name: Install and Build Customer Storefront
+        run: |
+          npm --prefix customer-frontend install
+          npm --prefix customer-frontend run build
+
+  # -------------------------------------------------------------
+  # Job 4: Docker Container Validation
+  # -------------------------------------------------------------
+  docker-build:
+    name: Docker Container Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Backend Dockerfile Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: false
+          tags: shopsense-backend:test
+
+      - name: Validate Frontend Dockerfile Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: false
+          tags: shopsense-frontend:test
+
+  # -------------------------------------------------------------
+  # Job 5: Continuous Deployment Simulation
+  # -------------------------------------------------------------
+  deploy-simulation:
+    name: Automated Staging Deployment Verification
+    needs: [lint, test-backend, build-frontend, docker-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Log Deployment Success
+        run: |
+          echo "====================================================="
+          echo "ShopSense CI/CD Pipeline Passed Successfully!"
+          echo "Milestones 1, 2, 3, 4, 5 Automated Checks Cleared."
+          echo "Ready for Zero-Downtime Production Deployment."
+          echo "====================================================="

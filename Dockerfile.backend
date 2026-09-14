@@ -1,0 +1,43 @@
+# =========================================================================
+# ShopSense Multi-Vendor Analytics Platform - FastAPI Backend Dockerfile
+# Milestone 4: Production Containerization
+# =========================================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies required for compilation and curl healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt \
+    psycopg2-binary>=2.9.9 \
+    langgraph>=0.2.0 \
+    pytest>=8.0.0 \
+    httpx>=0.27.0
+
+# Copy application source code
+COPY app/ ./app/
+COPY backend/ ./backend/
+COPY customer-backend/ ./customer-backend/
+COPY real_catalog_data.json .
+COPY shopsense.db .
+
+# Default Environment Variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
+ENV DATABASE_URL=""
+
+EXPOSE 8000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production Entrypoint
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

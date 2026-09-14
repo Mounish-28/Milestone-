@@ -5,30 +5,39 @@ import "react-toastify/dist/ReactToastify.css";
 import Header from "../components/Header";
 import StatsCard from "../components/StatsCard";
 import { exportExcel, exportCSV, exportPDF } from "../services/exportService";
+import { getTransactions, getVendors, getCustomers, getProducts } from "../services/api";
 
 const reportTypes = [
-  { id: "R1", title: "Executive Sales Report", description: "Comprehensive breakdown of gross revenue, average order values, and order trends.", type: "Monthly PDF/Excel", value: "$128,450" },
-  { id: "R2", title: "Vendor Commission & Performance", description: "Audit vendor sales volumes, platform commission fees, and active product listings.", type: "Weekly Audit", value: "12 Partners" },
-  { id: "R3", title: "Customer Behavior Analysis", description: "Demographic insights, repeat purchase frequencies, and geographic breakdown.", type: "Demographics", value: "154 Profiles" },
-  { id: "R4", title: "Inventory & Stock Audit", description: "Low stock alerts, product SKU distribution, and warehouse velocity metrics.", type: "Inventory", value: "48 Products" },
-];
-
-const mockReportData = [
-  { id: 101, name: "Executive Summary Report", email: "Generated on 2026-08-01 - Status: Approved" },
-  { id: 102, name: "Vendor Commission Report", email: "Generated on 2026-07-31 - Status: Approved" },
-  { id: 103, name: "Customer Acquisition Audit", email: "Generated on 2026-07-30 - Status: Approved" },
+  { id: "R1", title: "Executive Sales Report", description: "Comprehensive breakdown of gross revenue, average order values, and order trends.", type: "Monthly PDF/Excel", value: "$128,450", fetcher: getTransactions },
+  { id: "R2", title: "Vendor Commission & Performance", description: "Audit vendor sales volumes, platform commission fees, and active product listings.", type: "Weekly Audit", value: "12 Partners", fetcher: getVendors },
+  { id: "R3", title: "Customer Behavior Analysis", description: "Demographic insights, repeat purchase frequencies, and geographic breakdown.", type: "Demographics", value: "154 Profiles", fetcher: getCustomers },
+  { id: "R4", title: "Inventory & Stock Audit", description: "Low stock alerts, product SKU distribution, and warehouse velocity metrics.", type: "Inventory", value: "48 Products", fetcher: getProducts },
 ];
 
 function Reports() {
-  const handleDownloadReport = (title, format) => {
-    if (format === 'PDF') {
-      exportPDF(mockReportData);
-    } else if (format === 'Excel') {
-      exportExcel(mockReportData);
-    } else {
-      exportCSV(mockReportData);
+  const handleDownloadReport = async (rep, format) => {
+    try {
+      const data = await rep.fetcher();
+      const exportList = Array.isArray(data) && data.length > 0 ? data : [
+        { id: 1, name: `${rep.title} Sample 1`, status: "Active" },
+        { id: 2, name: `${rep.title} Sample 2`, status: "Active" }
+      ];
+
+      if (format === 'PDF') {
+        exportPDF(exportList.map(item => ({
+          id: item.id || item.transaction_ref || 1,
+          name: item.name || item.customer_name || "Item",
+          email: item.email || item.category || `$${item.amount || item.price || 0}`
+        })));
+      } else if (format === 'Excel') {
+        exportExcel(exportList);
+      } else {
+        exportCSV(exportList);
+      }
+      toast.success(`Generated live ${rep.title} in ${format} format!`);
+    } catch {
+      toast.error(`Failed to export ${rep.title}`);
     }
-    toast.success(`Generated ${title} in ${format} format!`);
   };
 
   return (
@@ -67,13 +76,13 @@ function Reports() {
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadReport(rep.title, 'CSV')}>
+              <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadReport(rep, 'CSV')}>
                 <FiDownload /> CSV
               </button>
-              <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadReport(rep.title, 'Excel')}>
+              <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadReport(rep, 'Excel')}>
                 <FiDownload /> Excel
               </button>
-              <button className="btn btn-primary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadReport(rep.title, 'PDF')}>
+              <button className="btn btn-primary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadReport(rep, 'PDF')}>
                 <FiFileText /> PDF
               </button>
             </div>

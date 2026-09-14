@@ -6,7 +6,7 @@
     margin-left:260px;
     padding:30px;
     min-height:100vh;
-    background:#F4F7FC;
+    background:var(--bg-primary, #DCE6F2);
 }
 
 /* ===========================
@@ -21,10 +21,11 @@
 }
 
 .stat-card{
-    background:#FFFFFF;
+    background:var(--bg-surface, #FFFFFF);
     padding:20px;
+    border:1px solid var(--border-color, #CBD5E1);
     border-radius:14px;
-    box-shadow:0 6px 15px rgba(0,0,0,.08);
+    box-shadow:var(--shadow-sm, 0 6px 15px rgba(0,0,0,.08));
     transition:0.3s;
 }
 

@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
-import { FiSun, FiMoon, FiBell, FiCheckCircle, FiAlertCircle, FiShield, FiBriefcase, FiUser, FiPower } from 'react-icons/fi';
+import { FiSun, FiMoon, FiBell, FiCheckCircle, FiAlertCircle, FiShield, FiBriefcase, FiUser, FiPlay } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 import { checkHealth } from '../services/api';
+import DemoShowcaseModal from './DemoShowcaseModal';
 
 function Header({ title, subtitle }) {
   const { theme, toggleTheme } = useTheme();
   const [isBackendOnline, setIsBackendOnline] = useState(true);
   const [role, setRole] = useState(localStorage.getItem("userRole") || "admin");
-  const [isVendorOnline, setIsVendorOnline] = useState(
-    localStorage.getItem("vendorStatus") !== "offline"
-  );
+  const [showDemoModal, setShowDemoModal] = useState(false);
   
   // User profile state
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "John Doe");
@@ -47,16 +46,45 @@ function Header({ title, subtitle }) {
     };
   }, []);
 
-  const toggleVendorStatus = () => {
-    const nextStatus = !isVendorOnline;
-    setIsVendorOnline(nextStatus);
-    localStorage.setItem("vendorStatus", nextStatus ? "online" : "offline");
-    window.dispatchEvent(new Event("vendorStatusChanged"));
-  };
-
-  const isAdmin = role === "admin";
+  const adminType = localStorage.getItem("adminType") || "executor";
+  const isChairman = role === "chairman" || adminType === "chairman";
+  const isAdmin = role === "admin" || isChairman;
   const salutation = gender === "Female" ? "Mrs." : gender === "Male" ? "Mr." : "";
   const welcomeText = `Welcome ${salutation} ${userName}`.trim();
+
+  // Dynamic Admin Badge Definition
+  const adminBadgeConfig = {
+    chairman: {
+      label: "👑 SUPREME CHAIRMAN & MANAGING DIRECTOR",
+      bg: "rgba(245, 158, 11, 0.15)",
+      color: "#FBBF24",
+      border: "1px solid rgba(245, 158, 11, 0.35)",
+      title: "Supreme Executive Authority & Board Chairman"
+    },
+    approver: {
+      label: "⚖️ APPROVER ADMIN (VENDOR APPROVAL AUTHORITY)",
+      bg: "rgba(16, 185, 129, 0.15)",
+      color: "#34D399",
+      border: "1px solid rgba(16, 185, 129, 0.35)",
+      title: "Cross-Check & Vendor Approval Authority"
+    },
+    verifier: {
+      label: "🔍 VERIFIER ADMIN (KYC & HUBS AUDIT)",
+      bg: "rgba(139, 92, 246, 0.15)",
+      color: "#A78BFA",
+      border: "1px solid rgba(139, 92, 246, 0.35)",
+      title: "Compliance & Security Verifier"
+    },
+    executor: {
+      label: "⚡ EXECUTOR ADMIN (OPERATIONS & INTAKE)",
+      bg: "rgba(37, 99, 235, 0.15)",
+      color: "#60A5FA",
+      border: "1px solid rgba(37, 99, 235, 0.35)",
+      title: "System Operations Executor"
+    }
+  };
+
+  const activeAdminBadge = adminBadgeConfig[adminType] || adminBadgeConfig.executor;
 
   const displayTitle = title || (isAdmin ? "Executive Admin Dashboard" : "Vendor Store Dashboard");
   const displaySubtitle = subtitle || `Greeting, ${welcomeText}`;
@@ -64,7 +92,7 @@ function Header({ title, subtitle }) {
   return (
     <header className="top-header">
       <div>
-        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: isAdmin ? "#2563EB" : "#10B981", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: isAdmin ? activeAdminBadge.color : "#10B981", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
           <FiUser /> {welcomeText}
         </div>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.75rem', margin: 0 }}>
@@ -74,53 +102,19 @@ function Header({ title, subtitle }) {
             style={{
               fontSize: '0.7rem',
               padding: '4px 10px',
-              background: isAdmin ? 'rgba(37, 99, 235, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-              color: isAdmin ? '#3B82F6' : '#10B981',
-              border: `1px solid ${isAdmin ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+              background: isAdmin ? activeAdminBadge.bg : 'rgba(16, 185, 129, 0.15)',
+              color: isAdmin ? activeAdminBadge.color : '#10B981',
+              border: isAdmin ? activeAdminBadge.border : '1px solid rgba(16, 185, 129, 0.3)'
             }}
           >
             {isAdmin ? <FiShield /> : <FiBriefcase />}
-            {isAdmin ? 'ADMIN MODE' : 'VENDOR MODE'}
+            {isAdmin ? activeAdminBadge.label : 'VENDOR PORTAL'}
           </span>
         </h1>
         <p style={{ marginTop: '2px' }}>{displaySubtitle}</p>
       </div>
 
       <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        {/* Vendor Online / Offline Status Button (Visible for Vendor) */}
-        {!isAdmin && (
-          <button
-            onClick={toggleVendorStatus}
-            className="btn"
-            style={{
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              background: isVendorOnline ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: isVendorOnline ? '#10B981' : '#EF4444',
-              border: `1px solid ${isVendorOnline ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-            title="Click to toggle store Online / Offline status"
-          >
-            <span
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: isVendorOnline ? '#10B981' : '#EF4444',
-                boxShadow: isVendorOnline ? '0 0 8px #10B981' : 'none'
-              }}
-            />
-            <FiPower style={{ fontSize: '0.9rem' }} />
-            <span>{isVendorOnline ? 'Vendor Online' : 'Vendor Offline'}</span>
-          </button>
-        )}
-
         {/* Backend Status Indicator */}
         <div 
           className={`badge ${isBackendOnline ? 'badge-success' : 'badge-warning'}`}
@@ -130,6 +124,29 @@ function Header({ title, subtitle }) {
           {isBackendOnline ? <FiCheckCircle /> : <FiAlertCircle />}
           <span>{isBackendOnline ? "API Online" : "Offline Mode"}</span>
         </div>
+
+        {/* Live Presentation Demo Showcase Button */}
+        <button
+          onClick={() => setShowDemoModal(true)}
+          className="btn btn-primary"
+          style={{
+            background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+            color: "#FFFFFF",
+            border: "none",
+            borderRadius: "50px",
+            padding: "8px 16px",
+            fontSize: "0.85rem",
+            fontWeight: 800,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            boxShadow: "0 4px 15px rgba(99, 102, 241, 0.4)"
+          }}
+          title="Open Real-World Live Presentation Scenarios & Script"
+        >
+          <span>🎬</span>
+          <span>Live Demo Guide</span>
+        </button>
 
         {/* Dark / Light Theme Toggle Button */}
         <button
@@ -156,16 +173,19 @@ function Header({ title, subtitle }) {
           <FiBell />
         </button>
 
-        {/* Profile Info (Removed harsh initial block box) */}
+        {/* Profile Info */}
         <div className="admin-profile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div>
             <strong style={{ display: 'block', fontSize: '0.9rem' }}>{salutation} {userName}</strong>
-            <small style={{ color: isAdmin ? '#3B82F6' : '#10B981', fontWeight: 600, display: 'block' }}>
-              {isAdmin ? "System Executive" : "Marketplace Seller"}
+            <small style={{ color: isAdmin ? activeAdminBadge.color : '#10B981', fontWeight: 600, display: 'block' }}>
+              {isAdmin ? activeAdminBadge.title : "Marketplace Seller"}
             </small>
           </div>
         </div>
       </div>
+
+      {/* Demo Showcase Modal */}
+      <DemoShowcaseModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
     </header>
   );
 }

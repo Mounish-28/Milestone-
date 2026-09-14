@@ -1,25 +1,36 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
+customer-frontend/node_modules/
+venv/
+.venv/
+env/
 
 # Environment & Build Outputs
 dist/
 frontend/dist/
+customer-frontend/dist/
 build/
 .env
 .env.local
 
-# Python Cache
+# Python Cache & Testing
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .pytest_cache/
 
-# IDE & OS
+# SQLite WAL & temporary files
+*.db-shm
+*.db-wal
+*.log
+
+# IDE, OS & Scratch
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-node_modules
-node_modules
+.agents/
+scratch/
+

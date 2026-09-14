@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* =========================================================
+   GLOBAL DESIGN TOKENS & CSS VARIABLES FOR CUSTOMER PORTAL
+   ========================================================= */
+
+:root,
+[data-theme="light"] {
+  /* =========================================================
+     SECTION 8: CUSTOMER STOREFRONT THEMING STRICT GUARDRAILS
+     Aesthetic: Premium boutique, clean, high-contrast product focus. Forced Light Mode.
+     ========================================================= */
+  --bg-primary: #F5F5F4; /* Soft Sand / Stone Store Canvas */
+  --bg-ambient-gradient: radial-gradient(circle at 10% 10%, rgba(15, 118, 110, 0.08) 0%, transparent 40%), radial-gradient(circle at 90% 10%, rgba(13, 148, 136, 0.06) 0%, transparent 40%), #F5F5F4;
+  --bg-surface: #FFFFFF; /* Pure White Card Surface */
+  --bg-surface-hover: #F0FDFA;
+  
+  /* Dominant Shell (Nav / Footer / Categories): Deep Ocean Teal */
+  --shell-teal: #0F766E;
+  --shell-teal-hover: #115E59;
+  --shell-teal-dark: #134E4A;
+  --sidebar-bg: #0F766E;
+  --sidebar-text: #FFFFFF;
+  --sidebar-text-muted: #CCFBF1;
+  --sidebar-logo-text: #FFFFFF;
+  --sidebar-border: #115E59;
+  
+  /* Typography & Text */
+  --text-main: #0F172A; /* High Contrast Slate */
+  --text-muted: #57534E; /* Warm Stone Muted */
+  --text-inverse: #FFFFFF;
+  --border-color: #E7E5E4; /* Stone Border */
+  --border-focus: #0D9488;
+  
+  /* AI Widget & Action (Buttons): Luminous Teal */
+  --primary-blue: #0D9488; /* Luminous Teal Primary Action */
+  --primary-blue-hover: #0F766E;
+  --ai-teal: #0D9488;
+  --ai-teal-hover: #0F766E;
+  
+  /* Highlights (Prices / Discount Tags): Rich Rosewood */
+  --price-rosewood: #BE123C;
+  --accent-rose: #BE123C;
+  --accent-gold: #D97706;
+  --accent-gold-hover: #B45309;
+  --accent-emerald: #059669;
+  
+  /* Card, Surface Elevation & Elevation */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.12);
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(231, 229, 228, 0.90);
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Palette (Deep Obsidian & Neon Accents) */
+  --bg-primary: #0B0F19;
+  --bg-ambient-gradient: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%), #0B0F19;
+  --bg-surface: #111827;
+  --bg-surface-hover: #1F2937;
+  
+  --sidebar-text: #94A3B8;
+  --sidebar-text-muted: #64748B;
+  --sidebar-logo-text: #FFFFFF;
+  --sidebar-border: #1E293B;
+
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
+  --text-inverse: #0F172A;
+  --border-color: #1F2937;
+  --border-focus: #60A5FA;
+
+  /* Brand Accents */
+  --primary-blue: #3B82F6;
+  --primary-blue-hover: #2563EB;
+  --accent-gold: #F59E0B;
+  --accent-gold-hover: #D97706;
+  --accent-purple: #8B5CF6;
+  --accent-emerald: #10B981;
+  --accent-rose: #EF4444;
+
+  /* Card & Glass Effect */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+  --glass-bg: rgba(17, 24, 39, 0.85);
+  --glass-border: rgba(31, 41, 55, 0.8);
+}
+
+/* Base Resets */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  background-image: var(--bg-ambient-gradient);
+  background-attachment: fixed;
+  background-size: cover;
+  color: var(--text-main);
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-blue);
+}
+
+/* Common Utilities */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--primary-blue);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background: var(--primary-blue-hover);
+  transform: translateY(-1px);
+}

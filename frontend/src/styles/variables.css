@@ -1,33 +1,102 @@
-:root {
-
+:root,
+[data-theme="light"] {
   /* Light Theme */
-
-  --bg:#F4F7FC;
-
-  --card:#FFFFFF;
-
-  --sidebar:#0F172A;
-
-  --sidebar-hover:#1E293B;
-
-  --primary:#2563EB;
-
-  --primary-hover:#1D4ED8;
-
-  --success:#10B981;
-
-  --warning:#F59E0B;
-
-  --danger:#EF4444;
-
-  --text:#0F172A;
-
-  --text-light:#64748B;
-
-  --border:#E2E8F0;
-
-  --shadow:0 10px 30px rgba(15,23,42,.08);
-
-  --radius:14px;
-
+  --bg: #DCE6F2;
+  --card: #FFFFFF;
+  --sidebar: linear-gradient(180deg, #FFFFFF 0%, #EBF2FA 100%);
+  --sidebar-hover: #D8E6F5;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #E11D48;
+  --text: #0F172A;
+  --text-light: #475569;
+  --border: #CBD5E1;
+  --shadow: 0 10px 30px rgba(15, 23, 42, .09);
+  --radius: 14px;
 }
+
+[data-theme="dark"] {
+  /* Dark Theme */
+  --bg: #0B0F19;
+  --card: #111827;
+  --sidebar: #0F172A;
+  --sidebar-hover: #1E293B;
+  --primary: #3B82F6;
+  --primary-hover: #2563EB;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --text: #F9FAFB;
+  --text-light: #94A3B8;
+  --border: #1E293B;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .6);
+  --radius: 14px;
+}
+
+/* =========================================================
+   SECTION 8: DYNAMIC UI/UX THEMING STRICT GUARDRAILS
+   ========================================================= */
+
+/* 1. LOGIN PORTAL */
+[data-page-context="login"],
+.context-login {
+  --login-canvas: linear-gradient(135deg, #1E1B4B 0%, #4C1D95 100%);
+  --login-iris: #1E1B4B;
+  --login-violet: #4C1D95;
+  --login-surface: #FFFFFF;
+  --login-action: #F59E0B;
+  --login-action-hover: #D97706;
+  --login-text: #0F172A;
+  --login-text-muted: #475569;
+}
+
+/* 2. CUSTOMER STOREFRONT (Forced Light Mode) */
+[data-page-context="customer"],
+.context-customer {
+  --customer-shell: #0F766E; /* Deep Ocean Teal */
+  --customer-canvas: #F5F5F4; /* Soft Sand / Stone */
+  --customer-card: #FFFFFF;
+  --customer-action: #0D9488; /* Luminous Teal */
+  --customer-highlight: #BE123C; /* Rich Rosewood */
+  --customer-text: #0F172A;
+  --customer-text-muted: #57534E;
+}
+
+/* 3. VENDOR DASHBOARD */
+[data-page-context="vendor"],
+.context-vendor {
+  --vendor-structure: #312E81; /* Deep Indigo */
+  --vendor-canvas: #F3F4F6; /* Cool Gray */
+  --vendor-card: #FFFFFF;
+  --vendor-action: #3B82F6; /* Vibrant Cobalt */
+  --vendor-growth: #10B981; /* Emerald Green */
+  --vendor-text: #111827;
+  --vendor-text-muted: #4B5563;
+}
+
+/* 4. ADMIN COMMAND CENTER */
+[data-page-context="admin"],
+.context-admin {
+  --admin-canvas: #18181B; /* Pitch Obsidian */
+  --admin-card: #27272A; /* Matte Charcoal */
+  --admin-authority: #E11D48; /* Crimson Red */
+  --admin-highlight: #38BDF8; /* Neon Sky Blue */
+  --admin-text: #F4F4F5;
+  --admin-text-muted: #A1A1AA;
+}
+
+/* 5. CHAIRMAN ADMIN CONTEXT */
+[data-page-context="chairman_admin"],
+.context-chairman-admin {
+  --chairman-canvas: #090A0F; /* Midnight Onyx */
+  --chairman-nav: #111827; /* Sovereign Slate */
+  --chairman-nav-border: 1px solid #D4AF37; /* 1px Burnished Gold border */
+  --chairman-gold: #D4AF37; /* Burnished Metallic Gold */
+  --chairman-orchestration: #8B5CF6; /* Sovereign Amethyst */
+  --chairman-killswitch: #DC2626; /* Deep Crimson */
+  --chairman-card: rgba(17, 24, 39, 0.95);
+  --chairman-text: #F8FAFC;
+  --chairman-text-muted: #94A3B8;
+}

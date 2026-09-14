@@ -1,0 +1,28 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Node.js
+node_modules/
+dist/
+build/
+npm-debug.log*
+
+# Database & Environment
+*.db
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+.DS_Store

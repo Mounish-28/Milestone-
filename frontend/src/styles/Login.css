@@ -11,16 +11,17 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #F8FAFC, #E2E8F0);
+    background: var(--bg-ambient-gradient, linear-gradient(135deg, #DCE6F2, #CBD5E1));
 }
 
 /* Login Card */
 .login-card {
     width: 420px;
-    background: #FFFFFF;
+    background: var(--bg-surface, #FFFFFF);
     padding: 40px;
     border-radius: 16px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color, #CBD5E1);
+    box-shadow: var(--shadow-lg, 0 15px 35px rgba(0,0,0,0.12));
 }
 
 /* Heading */

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiShield, FiMail, FiLock, FiKey, FiArrowRight, FiCheckCircle, FiUsers } from "react-icons/fi";
+import { FiShield, FiMail, FiLock, FiKey, FiArrowRight, FiUsers } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

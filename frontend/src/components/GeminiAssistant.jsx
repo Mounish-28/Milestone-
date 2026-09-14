@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiMessageSquare, FiX, FiSend, FiZap, FiCpu, FiTrendingUp, FiShoppingBag, FiBox } from "react-icons/fi";
+import { FiX, FiSend, FiZap, FiCpu } from "react-icons/fi";
+import { queryAIAssistant } from "../services/api";
 
 const initialMessages = [
   {
     id: 1,
     sender: "ai",
-    text: "Hello! I am your Gemini 3.6 Flash (High) AI Assistant. How can I help you optimize sales, analyze catalog inventory, or configure vendor settings today?",
+    text: "Hello! I am Ai Assistant. How can I help you today?",
     timestamp: "Just now"
   }
 ];
@@ -28,7 +29,7 @@ function GeminiAssistant() {
     }
   }, [messages, isOpen]);
 
-  const handleSendMessage = (textToSend) => {
+  const handleSendMessage = async (textToSend) => {
     const query = textToSend || inputMessage;
     if (!query.trim()) return;
 
@@ -43,31 +44,33 @@ function GeminiAssistant() {
     if (!textToSend) setInputMessage("");
     setIsThinking(true);
 
-    // AI Response Simulation using Gemini 3.6 Flash (High)
-    setTimeout(() => {
-      let aiReply = "Gemini 3.6 Flash (High) analyzed your query: ";
-      const qLower = query.toLowerCase();
-
-      if (qLower.includes("sales") || qLower.includes("revenue") || qLower.includes("trend")) {
-        aiReply = "📊 **Gemini Sales Insights**: Your platform revenue is up +18.4% this month! Top revenue category is **Electronics** ($89.99 avg ticket price). Recommend bundling accessories with UltraWide Monitors for a +12% boost.";
-      } else if (qLower.includes("stock") || qLower.includes("inventory")) {
-        aiReply = "📦 **Inventory Advisory**: 2 items are currently flagged as **Low Stock** (UltraWide Monitor, Pro Earbuds). Recommend placing restock purchase orders before weekend sales peak.";
-      } else if (qLower.includes("price") || qLower.includes("pricing")) {
-        aiReply = "🏷️ **Smart Pricing Suggestion**: Dynamic pricing model suggests adjusting Wireless Mouse pricing from $45.00 to $42.50 to increase conversion velocity by ~15%.";
-      } else {
-        aiReply = `⚡ **Gemini 3.6 Flash (High) Recommendation**: Based on real-time multi-vendor metrics, your active vendors are operating at 94% fulfillment health. Let me know if you'd like a custom report generated!`;
-      }
+    try {
+      const pageContext = localStorage.getItem("userRole") || "admin";
+      const data = await queryAIAssistant({
+        query: query,
+        page_context: pageContext,
+        target_language: null,
+        user_country: "India"
+      });
 
       const aiMsg = {
         id: Date.now() + 1,
         sender: "ai",
-        text: aiReply,
+        text: data.response || "No response received.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-
       setMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+      const errorMsg = {
+        id: Date.now() + 1,
+        sender: "ai",
+        text: "Error connecting to AI Assistant backend.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsThinking(false);
-    }, 1000);
+    }
   };
 
   return (

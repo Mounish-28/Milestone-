@@ -1,6 +1,27 @@
 {
   "name": "milestone-1",
   "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently -n \"ADMIN-BE,CUST-BE,ADMIN-FE,CUST-FE\" -c \"blue,magenta,cyan,yellow\" \"npm run dev:backend\" \"npm run dev:customer-backend\" \"npm run dev:admin\" \"npm run dev:customer\"",
+    "dev": "npm run start",
+    "dev:all": "npm run start",
+    "dev:admin-stack": "concurrently -n \"ADMIN-BE,ADMIN-FE\" -c \"blue,cyan\" \"npm run dev:backend\" \"npm run dev:admin\"",
+    "dev:customer-stack": "concurrently -n \"CUST-BE,CUST-FE\" -c \"magenta,yellow\" \"npm run dev:customer-backend\" \"npm run dev:customer\"",
+    "dev:backend": "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev:customer-backend": "python -m uvicorn main:app --app-dir customer-backend --host 0.0.0.0 --port 8001 --reload",
+    "dev:unified-backend": "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev:unified": "concurrently -n \"UNIFIED-BE,ADMIN-FE,CUST-FE\" -c \"green,cyan,yellow\" \"npm run dev:unified-backend\" \"npm run dev:admin\" \"npm run dev:customer\"",
+    "test": "python -m pytest tests/ -v",
+    "test:milestone4": "python -m pytest tests/test_milestone4_platform.py -v",
+    "test:milestone5": "python -m pytest tests/test_milestone5_ai_agent.py -v",
+    "test:all": "python -m pytest tests/ -v",
+    "test:backend": "python scratch/test_backend_suite.py",
+    "dev:admin": "npm --prefix frontend run dev:admin",
+    "dev:customer": "npm --prefix customer-frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "build:customer": "npm --prefix customer-frontend run build",
+    "build:all": "npm --prefix frontend run build && npm --prefix customer-frontend run build"
+  },
   "dependencies": {
     "axios": "^1.19.0",
     "file-saver": "^2.0.5",
@@ -11,6 +32,8 @@
     "react-toastify": "^11.1.0",
     "recharts": "^3.10.1",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }
-

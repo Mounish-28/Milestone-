@@ -71,7 +71,7 @@ function Analytics() {
       {/* KPI Cards */}
       <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px', marginBottom: '24px' }}>
         <StatsCard title="Conversion Rate" value="3.84%" icon={<FiTrendingUp />} color="#10B981" change="+0.4%" />
-        <StatsCard title="Avg. Order Value" value="$84.50" icon={<FiDollarSign />} color="#2563EB" change="+$4.20" />
+        <StatsCard title="Avg. Order Value" value="₹845.00" icon={<FiDollarSign />} color="#2563EB" change="+₹42.00" />
         <StatsCard title="Repeat Customers" value="42.8%" icon={<FiUsers />} color="#8B5CF6" change="+3.1%" />
         <StatsCard title="Return Rate" value="1.2%" icon={<FiShoppingBag />} color="#F59E0B" change="-0.3%" isPositive={true} />
       </div>

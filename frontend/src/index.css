@@ -4,48 +4,85 @@
    GLOBAL DESIGN TOKENS & CSS VARIABLES
    ========================================================= */
 
-:root {
-  /* Light Theme Palette */
-  --bg-primary: #F8FAFC;
+:root,
+[data-theme="light"] {
+  /* Ultra-Modern Sky Sapphire & Cool Slate Light Theme */
+  --bg-primary: #DCE6F2;
+  --bg-ambient-gradient: radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.15) 0%, transparent 40%), radial-gradient(circle at 90% 10%, rgba(124, 58, 237, 0.12) 0%, transparent 40%), radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.10) 0%, transparent 45%), linear-gradient(135deg, #DCE6F2 0%, #E3EBF5 50%, #D5E1EF 100%);
   --bg-surface: #FFFFFF;
-  --bg-surface-hover: #F1F5F9;
-  --bg-sidebar: #0F172A;
-  --bg-sidebar-hover: #1E293B;
-  --text-main: #0F172A;
-  --text-muted: #64748B;
-  --text-inverse: #FFFFFF;
-  --border-color: #E2E8F0;
-  --border-focus: #3B82F6;
+  --bg-surface-hover: #F0F5FD;
   
-  /* Brand Accents */
+  /* Sidebar Tokens (Light Mode: Elegant Frost Slate Gradient with Polished Borders) */
+  --bg-sidebar: linear-gradient(180deg, #FFFFFF 0%, #EBF2FA 100%);
+  --bg-sidebar-hover: #D8E6F5;
+  --sidebar-text: #0F172A;
+  --sidebar-text-muted: #475569;
+  --sidebar-logo-text: #0F172A;
+  --sidebar-border: #CBD5E1;
+  --sidebar-item-hover-bg: #D8E6F5;
+  --sidebar-item-hover-color: #1D4ED8;
+  --sidebar-item-active-bg: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  --sidebar-item-active-color: #FFFFFF;
+  --sidebar-footer-border: #CBD5E1;
+
+  /* Typography & Text (High Contrast Slate) */
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --text-inverse: #FFFFFF;
+  --border-color: #CBD5E1;
+  --border-focus: #2563EB;
+  
+  /* Brand Accents (Vibrant, High-Contrast & Harmonious) */
   --primary-blue: #2563EB;
   --primary-blue-hover: #1D4ED8;
-  --accent-gold: #F59E0B;
-  --accent-gold-hover: #D97706;
-  --accent-purple: #8B5CF6;
-  --accent-emerald: #10B981;
-  --accent-rose: #EF4444;
+  --accent-gold: #D97706;
+  --accent-gold-hover: #B45309;
+  --accent-purple: #7C3AED;
+  --accent-emerald: #059669;
+  --accent-rose: #E11D48;
 
-  /* Card & Glass Effect */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(226, 232, 240, 0.8);
+  /* Card, Surface Elevation & Glass Effect */
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 24px -2px rgba(15, 23, 42, 0.10), 0 3px 8px -1px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 16px 36px -4px rgba(15, 23, 42, 0.14), 0 6px 16px -2px rgba(15, 23, 42, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(203, 213, 225, 0.90);
 }
 
 [data-theme="dark"] {
-  /* Dark Theme Palette */
+  /* Dark Theme Palette (Deep Obsidian & Neon Accents) */
   --bg-primary: #0B0F19;
+  --bg-ambient-gradient: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%), #0B0F19;
   --bg-surface: #111827;
   --bg-surface-hover: #1F2937;
-  --bg-sidebar: #030712;
-  --bg-sidebar-hover: #111827;
+  
+  /* Sidebar Tokens (Dark Mode: Deep Obsidian Glass with Sleek Borders) */
+  --bg-sidebar: #0F172A;
+  --bg-sidebar-hover: #1E293B;
+  --sidebar-text: #94A3B8;
+  --sidebar-text-muted: #64748B;
+  --sidebar-logo-text: #FFFFFF;
+  --sidebar-border: #1E293B;
+  --sidebar-item-hover-bg: #1E293B;
+  --sidebar-item-hover-color: #F8FAFC;
+  --sidebar-item-active-bg: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  --sidebar-item-active-color: #FFFFFF;
+  --sidebar-footer-border: rgba(255, 255, 255, 0.08);
+
   --text-main: #F9FAFB;
   --text-muted: #9CA3AF;
   --text-inverse: #0F172A;
   --border-color: #1F2937;
   --border-focus: #60A5FA;
+
+  /* Brand Accents */
+  --primary-blue: #3B82F6;
+  --primary-blue-hover: #2563EB;
+  --accent-gold: #F59E0B;
+  --accent-gold-hover: #D97706;
+  --accent-purple: #8B5CF6;
+  --accent-emerald: #10B981;
+  --accent-rose: #EF4444;
 
   /* Card & Glass Effect */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
@@ -65,10 +102,14 @@
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-primary);
+  background-image: var(--bg-ambient-gradient);
+  background-attachment: fixed;
+  background-size: cover;
   color: var(--text-main);
   line-height: 1.5;
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
 /* Custom Scrollbar */

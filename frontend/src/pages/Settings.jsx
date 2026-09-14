@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FiSun, FiMoon, FiUser, FiSave, FiLock, FiShield, FiCheckCircle, FiEye, FiEyeOff, FiSmartphone, FiX } from "react-icons/fi";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { FiSun, FiMoon, FiUser, FiSave } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Header from "../components/Header";
 import { useTheme } from "../context/ThemeContext";
+import { getPaymentQR, getPaymentUPI, DEFAULT_PAYEE_NAME } from "../utils/paymentConfig";
 
 function Settings() {
   const { theme, toggleTheme } = useTheme();
@@ -13,22 +14,8 @@ function Settings() {
     displayName: localStorage.getItem("displayName") || "Mounish Sai",
     userName: localStorage.getItem("userName") || "mounish_admin",
     gender: localStorage.getItem("userGender") || "Male",
-    email: localStorage.getItem("userEmail") || "admin@shopsense.com",
-    aadhaarNumber: localStorage.getItem("aadhaarNumber") || "987654328921",
-    isAadhaarVerified: localStorage.getItem("aadhaarVerified") === "true"
+    email: localStorage.getItem("userEmail") || "admin@shopsense.com"
   });
-
-  const [showAadhaar, setShowAadhaar] = useState(false);
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpInput, setOtpInput] = useState("");
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-
-  const maskAadhaar = (num) => {
-    if (!num) return "XXXX-XXXX-XXXX";
-    const cleaned = num.replace(/\D/g, "");
-    if (cleaned.length < 12) return num;
-    return `XXXX-XXXX-${cleaned.slice(8)}`;
-  };
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
@@ -36,41 +23,9 @@ function Settings() {
     localStorage.setItem("userName", profile.userName);
     localStorage.setItem("userGender", profile.gender);
     localStorage.setItem("userEmail", profile.email);
-    localStorage.setItem("aadhaarNumber", profile.aadhaarNumber);
 
     window.dispatchEvent(new Event("profileUpdated"));
-    toast.success("Profile preferences & salutation updated!");
-  };
-
-  const handleSendAadhaarOtp = () => {
-    setShowOtpModal(true);
-    toast.info(`OTP sent to Aadhaar linked mobile ending in ******${profile.aadhaarNumber.slice(-4)}`);
-  };
-
-  const handleVerifyOtp = (e) => {
-    e.preventDefault();
-    setIsVerifyingOtp(true);
-    setTimeout(() => {
-      setIsVerifyingOtp(false);
-      setShowOtpModal(false);
-      setProfile(prev => ({ ...prev, isAadhaarVerified: true }));
-      localStorage.setItem("aadhaarVerified", "true");
-      toast.success("Aadhaar Identity Verified via OTP!");
-    }, 1200);
-  };
-
-  const handleDigiLockerFetch = () => {
-    toast.info("Connecting securely to Govt. DigiLocker API...");
-    setTimeout(() => {
-      setProfile(prev => ({
-        ...prev,
-        isAadhaarVerified: true,
-        displayName: prev.displayName || "Verified Citizen",
-        aadhaarNumber: "987654328921"
-      }));
-      localStorage.setItem("aadhaarVerified", "true");
-      toast.success("Identity verified via DigiLocker!");
-    }, 1500);
+    toast.success("Profile preferences updated!");
   };
 
   return (
@@ -82,14 +37,14 @@ function Settings() {
       className="page-container"
     >
       <ToastContainer position="top-right" autoClose={2500} theme="colored" />
-      <Header title="Account Settings & Aadhaar KYC" subtitle="Manage profile details, DigiLocker verification, gender salutation, and theme" />
+      <Header title="Account Settings" subtitle="Manage your profile preferences, display name, and interface theme" />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
         
-        {/* Profile & Salutation Card */}
+        {/* Profile Details Card */}
         <div className="chart-card">
           <h3 className="chart-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <FiUser style={{ color: 'var(--primary-blue)' }} /> User Profile & Gender Salutation
+            <FiUser style={{ color: 'var(--primary-blue)' }} /> User Profile & Account Info
           </h3>
 
           <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -139,158 +94,97 @@ function Settings() {
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '6px' }}>
-              <FiSave /> Save Profile & Prefix
+              <FiSave /> Save Profile Settings
             </button>
           </form>
         </div>
 
-        {/* Aadhaar KYC & DigiLocker Card */}
+        {/* Interface Theme Preferences Card */}
         <div className="chart-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 className="chart-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-              <FiShield style={{ color: '#10B981' }} /> Aadhaar & DigiLocker Verification
-            </h3>
-            {profile.isAadhaarVerified && (
-              <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <FiCheckCircle /> KYC Verified
-              </span>
-            )}
-          </div>
+          <h3 className="chart-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            {theme === 'light' ? <FiSun style={{ color: '#F59E0B' }} /> : <FiMoon style={{ color: '#F59E0B' }} />} Interface Theme Preference
+          </h3>
 
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-            Secure identity verification compliant with UIDAI & DigiLocker standards.
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
+            Customize your visual workspace interface theme (Light Mode / Dark Mode).
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
-                Aadhaar Number (Masked)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  readOnly={!showAadhaar}
-                  value={showAadhaar ? profile.aadhaarNumber : maskAadhaar(profile.aadhaarNumber)}
-                  onChange={(e) => setProfile({ ...profile, aadhaarNumber: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 42px 10px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-primary)',
-                    color: 'var(--text-main)',
-                    letterSpacing: '1px',
-                    fontWeight: 600
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowAadhaar(!showAadhaar)}
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    fontSize: '1rem'
-                  }}
-                  title={showAadhaar ? "Mask Aadhaar Number" : "Unmask Aadhaar Number"}
-                >
-                  {showAadhaar ? <FiEyeOff /> : <FiEye />}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleSendAadhaarOtp}
-                style={{ padding: '10px', fontSize: '0.82rem', gap: '6px' }}
-              >
-                <FiSmartphone style={{ color: 'var(--primary-blue)' }} /> Send Aadhaar OTP
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleDigiLockerFetch}
-                style={{ padding: '10px', fontSize: '0.82rem', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
-              >
-                <FiShield /> Fetch via DigiLocker
-              </button>
-            </div>
-          </div>
-
-          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px' }}>Interface Theme</h4>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Current Mode: {theme.toUpperCase()}</span>
-              <button className="btn btn-secondary" onClick={toggleTheme} style={{ padding: '6px 14px', fontSize: '0.82rem' }}>
-                {theme === 'light' ? <FiMoon /> : <FiSun />} Toggle Theme
-              </button>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Active Mode: {theme.toUpperCase()}</span>
+            <button className="btn btn-secondary" onClick={toggleTheme} style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+              {theme === 'light' ? <FiMoon /> : <FiSun />} Switch to {theme === 'light' ? 'Dark' : 'Light'} Mode
+            </button>
           </div>
         </div>
 
-      </div>
-
-      {/* Aadhaar OTP Verification Modal */}
-      <AnimatePresence>
-        {showOtpModal && (
-          <div className="modal-overlay">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="modal-card"
-              style={{ maxWidth: '420px' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FiSmartphone style={{ color: 'var(--primary-blue)' }} /> Enter Aadhaar OTP
-                </h3>
-                <button onClick={() => setShowOtpModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                  <FiX />
-                </button>
-              </div>
-
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                A 6-digit verification code has been dispatched to your UIDAI registered mobile number.
-              </p>
-
-              <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {/* Payment Gateway Configuration Card */}
+        <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
+          <h3 className="chart-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <span style={{ color: '#10B981' }}>🛡️</span> Payment Gateway Configuration (QR Scanner)
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
+            Set up the QR code image and UPI ID that customers will see during checkout to make payments directly to you.
+          </p>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              toast.success("Payment Gateway Settings Saved Successfully!");
+            }} 
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>UPI ID / Merchant ID ({DEFAULT_PAYEE_NAME})</label>
                 <input
                   type="text"
-                  maxLength={6}
-                  required
-                  placeholder="e.g. 582910"
-                  value={otpInput}
-                  onChange={(e) => setOtpInput(e.target.value)}
-                  style={{
-                    padding: '12px',
-                    textAlign: 'center',
-                    fontSize: '1.2rem',
-                    letterSpacing: '8px',
-                    fontWeight: 700,
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-primary)',
-                    color: 'var(--text-main)'
-                  }}
+                  defaultValue={getPaymentUPI()}
+                  onChange={(e) => localStorage.setItem("platformUPIId", e.target.value)}
+                  placeholder="e.g. yourname@bank"
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)' }}
                 />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Upload Custom QR Code</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        localStorage.setItem("platformQRUrl", reader.result);
+                        toast.success("QR Code updated! It will now appear on checkout.");
+                        // Force a re-render to show the new preview
+                        setProfile(prev => ({...prev}));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                />
+              </div>
 
-                <button type="submit" className="btn btn-primary" disabled={isVerifyingOtp} style={{ padding: '12px' }}>
-                  {isVerifyingOtp ? "Verifying with UIDAI..." : "Verify & Complete KYC"}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '6px' }}>
+                <FiSave /> Update Payment Settings
+              </button>
+            </div>
+
+            {/* QR Code Preview */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)', padding: '20px', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '15px', color: 'var(--text-muted)' }}>Current QR Code Preview</span>
+              <img 
+                src={getPaymentQR()} 
+                alt="QR Preview" 
+                style={{ width: '180px', height: '180px', objectFit: 'contain', borderRadius: '8px', background: '#fff', padding: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }} 
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>Merchant: <strong>{DEFAULT_PAYEE_NAME}</strong></span>
+            </div>
+          </form>
+        </div>
+
+      </div>
     </motion.div>
   );
 }

@@ -1,0 +1,122 @@
+# =========================================================================
+# ShopSense Multi-Vendor E-Commerce Analytics Platform
+# Milestone 4 & 5: Production Multi-Container Orchestration
+# =========================================================================
+
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # 1. PostgreSQL Database Service (Milestone 4 & 5 Cloud Stack)
+  # -------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopsense-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shopsense
+      POSTGRES_PASSWORD: shopsense_secure_password
+      POSTGRES_DB: shopsensedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopsense -d shopsensedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsense-network
+
+  # -------------------------------------------------------------
+  # 2. Admin & Vendor Analytics Backend (FastAPI - Port 8000)
+  # -------------------------------------------------------------
+  admin-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: shopsense-admin-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://shopsense:shopsense_secure_password@postgres:5432/shopsensedb
+      - PORT=8000
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-your_email@gmail.com}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-your_16_digit_app_password}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - shopsense-network
+
+  # -------------------------------------------------------------
+  # 3. Customer Storefront Backend (FastAPI Microservice - Port 8001)
+  # -------------------------------------------------------------
+  customer-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: shopsense-customer-backend
+    restart: unless-stopped
+    command: ["uvicorn", "customer-backend.main:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://shopsense:shopsense_secure_password@postgres:5432/shopsensedb
+      - PORT=8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - shopsense-network
+
+  # -------------------------------------------------------------
+  # 4. Admin Portal & Business Intelligence Dashboard (Port 5173)
+  # -------------------------------------------------------------
+  admin-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_URL=http://localhost:8000
+    container_name: shopsense-admin-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - admin-backend
+    networks:
+      - shopsense-network
+
+  # -------------------------------------------------------------
+  # 5. Customer Experience Storefront (Port 5174)
+  # -------------------------------------------------------------
+  customer-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.customer-frontend
+      args:
+        - VITE_API_URL=http://localhost:8001
+    container_name: shopsense-customer-frontend
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    depends_on:
+      - customer-backend
+    networks:
+      - shopsense-network
+
+# Persistent Volumes
+volumes:
+  postgres_data:
+    name: shopsense_postgres_data
+
+# Internal Network
+networks:
+  shopsense-network:
+    name: shopsense-network
+    driver: bridge

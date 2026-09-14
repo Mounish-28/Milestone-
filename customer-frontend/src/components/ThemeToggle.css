@@ -1,0 +1,97 @@
+/* ThemeToggle.css - Modern Theme Switch Button */
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #F8FAFC;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  user-select: none;
+}
+
+.theme-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle-btn.theme-dark {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #FBBF24; /* Warm Sun Amber */
+}
+
+.theme-toggle-btn.theme-dark:hover {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: #FBBF24;
+  color: #FCD34D;
+}
+
+.theme-toggle-btn.theme-light {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #475569; /* Slate Moon */
+}
+
+.theme-toggle-btn.theme-light:hover {
+  background: #E2E8F0;
+  border-color: #94A3B8;
+  color: #1E293B;
+}
+
+[data-theme="light"] .theme-toggle-btn {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+  background: #E2E8F0;
+  border-color: #94A3B8;
+}
+
+.theme-toggle-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.theme-icon {
+  font-size: 1.15rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-toggle-btn:hover .theme-icon {
+  transform: rotate(18deg) scale(1.1);
+}
+
+.icon-sun {
+  color: #F59E0B;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4));
+}
+
+.icon-moon {
+  color: #6366F1;
+  filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.3));
+}
+
+[data-theme="light"] .icon-moon {
+  color: #4F46E5;
+}
+
+.theme-toggle-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}

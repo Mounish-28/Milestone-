@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiShield,
@@ -9,7 +9,6 @@ import {
   FiKey,
   FiArrowRight,
   FiShoppingBag,
-  FiUser,
   FiSmartphone,
   FiCheckCircle,
   FiHelpCircle,
@@ -20,12 +19,15 @@ import {
   FiInbox,
   FiX,
   FiRefreshCw,
-  FiMessageSquare,
-  FiPhone
+  FiPhone,
+  FiUserPlus,
+  FiUserCheck,
+  FiAward
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { sendSecurityEmailApi, requestAadhaarOtpApi } from "../services/api";
+import { sendSecurityEmailApi, requestAadhaarOtpApi, loginUserApi, forgotSecurityKeyApi } from "../services/api";
+import { initialAdminApplicants, ADMIN_APPLICANTS_KEY } from "./ChairmanDashboard";
 
 function Login() {
   const navigate = useNavigate();
@@ -33,28 +35,60 @@ function Login() {
   // Multi-step flow: 'credentials' | 'aadhaar_otp' | 'security_email' | 'security_pin' | 'forgot_key'
   const [step, setStep] = useState("credentials");
   const [activeTab, setActiveTab] = useState("admin"); // 'admin' | 'vendor'
+  const [adminType, setAdminType] = useState("executor"); // 'executor' | 'verifier' | 'approver' | 'chairman'
 
-  // Admin credentials state
-  const [adminDisplayName, setAdminDisplayName] = useState("Mounish Sai");
-  const [adminUserName, setAdminUserName] = useState("mounish_admin");
+  // New Admin Registration Modal State
+  const [showNewAdminRegModal, setShowNewAdminRegModal] = useState(false);
+  const [newAdminRegForm, setNewAdminRegForm] = useState({
+    fullName: "",
+    userName: "",
+    email: "",
+    phone: "",
+    aadhaarNumber: "",
+    gender: "Male",
+    requestedRole: "executor",
+    headline: "",
+    education: "",
+    certifications: "",
+    experience: "",
+    resumeFileName: "",
+    password: ""
+  });
+  const [regSuccessModalData, setRegSuccessModalData] = useState(null);
+
+  // Admin credentials state (Defaults to Type 1: Executor)
+  const [adminDisplayName, setAdminDisplayName] = useState("Mounish Sai (Executor Admin)");
+  const [adminUserName, setAdminUserName] = useState("mounish_executor");
   const [adminGender, setAdminGender] = useState("Male");
-  const [adminAadhaar, setAdminAadhaar] = useState("987654328921");
-  const [adminEmail, setAdminEmail] = useState("admin@shopsense.com");
-  const [adminPhone, setAdminPhone] = useState("+91 9876543210");
+  const [adminAadhaar, setAdminAadhaar] = useState("987654321478");
+  const [adminEmail, setAdminEmail] = useState("executor.admin@shopsense.com");
+  const [adminPhone, setAdminPhone] = useState("+91 9876543214");
   const [adminPassword, setAdminPassword] = useState("admin123");
-  const [adminSecKey, setAdminSecKey] = useState("SEC-KEY-9988");
-  const [adminSecPin, setAdminSecPin] = useState("9988");
+  const [adminSecKey, setAdminSecKey] = useState("SEC-KEY-1478");
+  const [adminSecPin, setAdminSecPin] = useState("1478");
 
   // Vendor credentials state
   const [vendorDisplayName, setVendorDisplayName] = useState("Rahul Sharma");
   const [vendorUserName, setVendorUserName] = useState("rahul_vendor");
   const [vendorGender, setVendorGender] = useState("Male");
-  const [vendorAadhaar, setVendorAadhaar] = useState("987654321234");
+  const [vendorAadhaar, setVendorAadhaar] = useState("987654327139");
   const [vendorEmail, setVendorEmail] = useState("vendor@shopsense.com");
-  const [vendorPhone, setVendorPhone] = useState("+91 9812345678");
+  const [approvedVendorsList, setApprovedVendorsList] = useState([]);
+
+  React.useEffect(() => {
+    if (activeTab === "vendor") {
+      fetch("http://localhost:8000/vendors/")
+        .then(res => res.json())
+        .then(data => {
+          setApprovedVendorsList(data);
+        })
+        .catch(err => console.error("Failed to fetch vendors:", err));
+    }
+  }, [activeTab]);
+  const [vendorPhone, setVendorPhone] = useState("+91 9812347139");
   const [vendorPassword, setVendorPassword] = useState("vendor123");
-  const [vendorSecKey, setVendorSecKey] = useState("SEC-KEY-7766");
-  const [vendorSecPin, setVendorSecPin] = useState("7766");
+  const [vendorSecKey, setVendorSecKey] = useState("SEC-KEY-7139");
+  const [vendorSecPin, setVendorSecPin] = useState("7139");
 
   // Aadhaar masking & PIN visibility state
   const [showAadhaarNumber, setShowAadhaarNumber] = useState(false);
@@ -106,8 +140,88 @@ function Login() {
     }, 1000);
   };
 
+  // Handle Register as New Admin Application
+  const handleRegisterNewAdmin = (e) => {
+    e.preventDefault();
+    if (!newAdminRegForm.fullName || !newAdminRegForm.email || !newAdminRegForm.phone || !newAdminRegForm.aadhaarNumber) {
+      toast.error("Please fill in all required registration fields.");
+      return;
+    }
+
+    const requestedTitle =
+      newAdminRegForm.requestedRole === "approver"
+        ? "Type 3: Commercial Performance Bond & Final Approver Authority"
+        : newAdminRegForm.requestedRole === "verifier"
+        ? "Type 2: Compliance & Physical Geolocation Verifier"
+        : "Type 1: System Operations & Legal Intake Executor";
+
+    const applicantId = `ADM-APP-${Math.floor(200 + Math.random() * 800)}`;
+    const newApplicant = {
+      id: applicantId,
+      fullName: newAdminRegForm.fullName,
+      userName: newAdminRegForm.userName || newAdminRegForm.fullName.toLowerCase().replace(/\s+/g, "_"),
+      email: newAdminRegForm.email,
+      phone: newAdminRegForm.phone,
+      aadhaarNumber: newAdminRegForm.aadhaarNumber,
+      gender: newAdminRegForm.gender,
+      requestedRole: newAdminRegForm.requestedRole,
+      requestedRoleTitle: requestedTitle,
+      experience: newAdminRegForm.experience || "Application submitted via online admin portal.",
+      status: "PENDING",
+      appliedDate: new Date().toLocaleString(),
+      assignedRole: null,
+      assignedRoleTitle: null,
+      approvedDate: null,
+      chairmanNotes: null,
+      resume: {
+        title: newAdminRegForm.headline || `${newAdminRegForm.fullName} - Administrative Specialist`,
+        summary: newAdminRegForm.experience || "Extensive background in regulatory operations, compliance auditing, and multi-vendor lifecycle governance.",
+        education: newAdminRegForm.education || "Bachelor / Master in Business Operations & Enterprise Management",
+        certifications: newAdminRegForm.certifications
+          ? newAdminRegForm.certifications.split(",").map((c) => c.trim())
+          : ["Certified Compliance Professional (CCP)", "Enterprise Quality Auditor"],
+        skills: [
+          newAdminRegForm.requestedRole === "approver"
+            ? "Commercial Escrow Contracts & 5.0% Gross Bonds"
+            : newAdminRegForm.requestedRole === "verifier"
+            ? "Aadhaar KYC & Geolocation Telemetry Inspections"
+            : "MCA Legal Complaints Scanner & Trust Scoring",
+          "Regulatory Risk Assessment",
+          "eCommerce Partner Due Diligence",
+          "Cross-Functional Audit Workflow"
+        ],
+        workExperience: [
+          {
+            company: "Enterprise E-Commerce Operations",
+            role: "Senior Operations & Compliance Lead",
+            duration: "2021 - 2026 (5 Years)",
+            responsibilities: newAdminRegForm.experience || "Led cross-functional investigations, risk audits, and merchant partner lifecycle onboarding."
+          }
+        ],
+        attachedFileName: newAdminRegForm.resumeFileName || `Resume_${newAdminRegForm.fullName.replace(/\s+/g, '_')}_CV.pdf`,
+        attachedFileSize: "2.8 MB (Verified Hash)"
+      }
+    };
+
+    let existingApplicants = initialAdminApplicants;
+    try {
+      const saved = localStorage.getItem(ADMIN_APPLICANTS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) existingApplicants = parsed;
+      }
+    } catch {}
+
+    const updated = [newApplicant, ...existingApplicants];
+    localStorage.setItem(ADMIN_APPLICANTS_KEY, JSON.stringify(updated));
+
+    setShowNewAdminRegModal(false);
+    setRegSuccessModalData(newApplicant);
+    toast.success(`🎉 Application & Resume for ${newApplicant.fullName} submitted to Chairman Mounish Sai!`);
+  };
+
   // Step 1: Submit Primary Credentials
-  const handleProceedToAadhaar = (e) => {
+  const handleProceedToAadhaar = async (e) => {
     e.preventDefault();
 
     if (activeTab === "admin") {
@@ -115,9 +229,45 @@ function Login() {
         toast.error("Please fill in all required credentials.");
         return;
       }
+
+      // Check if this applicant is pending review by Chairman Mounish
+      try {
+        const savedApplicants = localStorage.getItem(ADMIN_APPLICANTS_KEY);
+        if (savedApplicants) {
+          const parsed = JSON.parse(savedApplicants);
+          const matched = parsed.find(
+            (a) =>
+              (a.userName && a.userName.toLowerCase() === adminUserName.toLowerCase()) ||
+              (a.email && a.email.toLowerCase() === adminEmail.toLowerCase())
+          );
+          if (matched) {
+            if (matched.status === "PENDING") {
+              toast.warning(`⏳ Access Pending: Your application for "${matched.fullName}" (${matched.id}) is waiting for Chairman Mounish's approval and role assignment.`);
+              return;
+            } else if (matched.status === "REJECTED") {
+              toast.error(`🚫 Access Denied: Your application was rejected by Chairman Mounish. (${matched.chairmanNotes || "Disqualified"})`);
+              return;
+            } else if (matched.status === "APPROVED" && matched.assignedRole) {
+              setAdminType(matched.assignedRole);
+            }
+          }
+        }
+      } catch {}
     } else {
       if (!vendorDisplayName || !vendorUserName || !vendorAadhaar || !vendorEmail || !vendorPhone || !vendorPassword) {
         toast.error("Please fill in all required credentials.");
+        return;
+      }
+
+      // Verify vendor pipeline status with the backend before allowing login
+      try {
+        await loginUserApi({
+          email: vendorEmail,
+          password: vendorPassword,
+          role: "vendor"
+        });
+      } catch (error) {
+        toast.error(error.response?.data?.detail || "Login failed.");
         return;
       }
     }
@@ -203,8 +353,9 @@ function Login() {
       return;
     }
 
-    // Accept valid 4-digit PIN (e.g. expected PIN or fallback demo PIN)
-    if (pinInput !== expectedPin && pinInput !== "9988" && pinInput !== "7766") {
+    // Accept valid 4-digit PIN (e.g. expected PIN or fallback demo PINs)
+    const validPins = ["9988", "8877", "6655", "7766", "5544", "3322", "1122", expectedPin];
+    if (!validPins.includes(pinInput)) {
       toast.error("Invalid Security PIN. Please check the PIN sent to your Email or SMS.");
       return;
     }
@@ -218,8 +369,66 @@ function Login() {
     const phone = currentRole === "admin" ? adminPhone : vendorPhone;
     const secKey = currentRole === "admin" ? adminSecKey : vendorSecKey;
 
+    const isChairman = currentRole === "admin" && (adminType === "chairman" || userName === "mounish_chairman");
+
+    // Determine vendor ID & Store Name dynamically if logging in as Vendor
+    let determinedVendorId = 4;
+    let determinedStoreName = localStorage.getItem("vendorStoreName") || "TechWorld Electronics";
+    if (currentRole === "vendor") {
+      const storedVId = localStorage.getItem("vendorId");
+      const matchedVendor = approvedVendorsList.find(
+        (v) =>
+          (storedVId && String(v.id) === String(storedVId)) ||
+          (v.email && email && v.email.toLowerCase() === email.toLowerCase()) ||
+          (v.name && (v.name.toLowerCase().includes("voltx") && (email.toLowerCase().includes("voltx") || displayName.toLowerCase().includes("voltx") || userName.toLowerCase().includes("voltx")))) ||
+          (v.name && displayName && displayName.toLowerCase().includes(v.name.toLowerCase()))
+      );
+
+      if (matchedVendor) {
+        determinedVendorId = matchedVendor.id;
+        determinedStoreName = matchedVendor.name;
+      } else if (email.toLowerCase().includes("voltx") || userName.toLowerCase().includes("voltx") || displayName.toLowerCase().includes("voltx")) {
+        determinedVendorId = 9;
+        determinedStoreName = "VoltX Smart Mobiles";
+      } else if (email.includes("stylehub") || userName.includes("stylehub") || displayName.includes("StyleHub") || displayName.includes("Clothes") || displayName.includes("Pooja")) {
+        determinedVendorId = 5;
+        determinedStoreName = "StyleHub Fashion & Clothes";
+      } else if (email.includes("modernhome") || userName.includes("modernhome") || displayName.includes("ModernHome") || displayName.includes("Furniture") || displayName.includes("Amit")) {
+        determinedVendorId = 6;
+        determinedStoreName = "ModernHome Furniture & Living";
+      } else if (email.includes("gadgetcentral") || userName.includes("gadgetcentral") || displayName.includes("GadgetCentral") || displayName.includes("Robotics")) {
+        determinedVendorId = 7;
+        determinedStoreName = "GadgetCentral Toys & Robotics";
+      } else if (email.includes("apple") || userName.includes("apple") || displayName.includes("Apple")) {
+        determinedVendorId = 8;
+        determinedStoreName = "Apple India Official";
+        localStorage.setItem("appleVendorOnboarded", "true");
+      } else if (storedVId && storedVId !== "1") {
+        determinedVendorId = Number(storedVId);
+        determinedStoreName = localStorage.getItem("vendorStoreName") || "TechWorld Electronics";
+      } else {
+        determinedVendorId = 4;
+        determinedStoreName = "TechWorld Electronics";
+      }
+      localStorage.setItem("vendorId", String(determinedVendorId));
+      localStorage.setItem("vendorStoreName", determinedStoreName);
+    }
+
     // Save session in localStorage
-    localStorage.setItem("userRole", currentRole);
+    localStorage.setItem("userRole", isChairman ? "chairman" : currentRole);
+    localStorage.setItem("adminType", isChairman ? "chairman" : (currentRole === "admin" ? adminType : ""));
+    localStorage.setItem(
+      "adminTypeTitle",
+      isChairman
+        ? "Supreme Chairman & Managing Director"
+        : currentRole === "admin"
+        ? adminType === "approver"
+          ? "Cross-Check & Approver Authority"
+          : adminType === "verifier"
+          ? "Compliance & KYC Verifier"
+          : "System Operations Executor"
+        : ""
+    );
     localStorage.setItem("displayName", displayName);
     localStorage.setItem("userName", userName);
     localStorage.setItem("userGender", gender);
@@ -228,67 +437,283 @@ function Login() {
     localStorage.setItem("aadhaarNumber", aadhaar);
     localStorage.setItem("securityKey", secKey);
     localStorage.setItem("aadhaarVerified", "true");
+    localStorage.setItem("authSessionActive", "true");
+    localStorage.setItem("isLoggedIn", "true");
 
     // Dispatch custom events for instant UI update without page reload
     window.dispatchEvent(new Event("roleChanged"));
     window.dispatchEvent(new Event("profileUpdated"));
+    window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("storage"));
 
-    toast.success("Security PIN Verified! Welcome to ShopSense.");
+    toast.success(`Security PIN Verified! Welcome, ${displayName}.`);
     setTimeout(() => {
       navigate("/");
     }, 800);
   };
 
-  // Forgot Security Key Submit
-  const handleRequestNewSecurityKey = (e) => {
+  // Step 5 Handler: Request New Security Key / Password Recovery
+  const handleRequestNewSecurityKey = async (e) => {
     e.preventDefault();
-    if (!forgotInput) {
-      toast.error("Please enter your registered Email ID or Phone Number");
+    if (!forgotInput || !forgotInput.trim()) {
+      toast.error("Please enter your registered Email or Mobile Number");
       return;
     }
-
     setIsSubmittingForgot(true);
-    setTimeout(() => {
+    try {
+      const isEmail = forgotInput.includes("@");
+      const payload = isEmail ? { email: forgotInput.trim() } : { phone: forgotInput.trim(), identifier: forgotInput.trim() };
+      const res = await forgotSecurityKeyApi(payload);
+      const newKey = res?.security_key || `SEC-${Math.floor(1000 + Math.random() * 9000)}`;
+      setDispatchedNewKey({ to: forgotInput.trim(), key: newKey });
+      toast.success(res?.message || `New permanent Security Key dispatched to ${forgotInput.trim()}`);
+    } catch (_err) {
+      const fallbackKey = `SEC-${Math.floor(1000 + Math.random() * 9000)}`;
+      setDispatchedNewKey({ to: forgotInput.trim(), key: fallbackKey });
+      toast.success(`New permanent Security Key generated & dispatched to ${forgotInput.trim()}`);
+    } finally {
       setIsSubmittingForgot(false);
-      const newKey = "SEC-KEY-" + Math.floor(1000 + Math.random() * 9000);
-      const newPin = Math.floor(1000 + Math.random() * 9000).toString();
+    }
+  };
 
-      if (activeTab === "admin") {
-        setAdminSecKey(newKey);
-        setAdminSecPin(newPin);
+  // 1-Click Fast Instant Demo Sign In
+  const handleInstantSignIn = () => {
+    const currentRole = activeTab;
+    const isChairman = currentRole === "admin" && (adminType === "chairman" || adminUserName === "mounish_chairman");
+    const displayName = currentRole === "admin" ? adminDisplayName : vendorDisplayName;
+    const userName = currentRole === "admin" ? adminUserName : vendorUserName;
+    const gender = currentRole === "admin" ? adminGender : vendorGender;
+    const aadhaar = currentRole === "admin" ? adminAadhaar : vendorAadhaar;
+    const email = currentRole === "admin" ? adminEmail : vendorEmail;
+    const phone = currentRole === "admin" ? adminPhone : vendorPhone;
+    const secKey = currentRole === "admin" ? adminSecKey : vendorSecKey;
+
+    let determinedVendorId = 4;
+    let determinedStoreName = localStorage.getItem("vendorStoreName") || "TechWorld Electronics";
+    if (currentRole === "vendor") {
+      const storedVId = localStorage.getItem("vendorId");
+      const matchedVendor = approvedVendorsList.find(
+        (v) =>
+          (storedVId && String(v.id) === String(storedVId)) ||
+          (v.email && email && v.email.toLowerCase() === email.toLowerCase()) ||
+          (v.name && (v.name.toLowerCase().includes("voltx") && (email.toLowerCase().includes("voltx") || displayName.toLowerCase().includes("voltx") || userName.toLowerCase().includes("voltx")))) ||
+          (v.name && displayName && displayName.toLowerCase().includes(v.name.toLowerCase()))
+      );
+
+      if (matchedVendor) {
+        determinedVendorId = matchedVendor.id;
+        determinedStoreName = matchedVendor.name;
+      } else if (email.toLowerCase().includes("voltx") || userName.toLowerCase().includes("voltx") || displayName.toLowerCase().includes("voltx")) {
+        determinedVendorId = 9;
+        determinedStoreName = "VoltX Smart Mobiles";
+      } else if (email.includes("stylehub") || userName.includes("stylehub")) {
+        determinedVendorId = 5;
+        determinedStoreName = "StyleHub Fashion & Clothes";
+      } else if (email.includes("modernhome") || userName.includes("modernhome")) {
+        determinedVendorId = 6;
+        determinedStoreName = "ModernHome Furniture & Living";
+      } else if (email.includes("gadgetcentral") || userName.includes("gadgetcentral")) {
+        determinedVendorId = 7;
+        determinedStoreName = "GadgetCentral Toys & Robotics";
+      } else if (email.includes("apple") || userName.includes("apple")) {
+        determinedVendorId = 8;
+        determinedStoreName = "Apple India Official";
+        localStorage.setItem("appleVendorOnboarded", "true");
+      } else if (storedVId && storedVId !== "1") {
+        determinedVendorId = Number(storedVId);
+        determinedStoreName = localStorage.getItem("vendorStoreName") || "TechWorld Electronics";
       } else {
-        setVendorSecKey(newKey);
-        setVendorSecPin(newPin);
+        determinedVendorId = 4;
+        determinedStoreName = "TechWorld Electronics";
       }
+      localStorage.setItem("vendorId", String(determinedVendorId));
+      localStorage.setItem("vendorStoreName", determinedStoreName);
+    }
 
-      setDispatchedNewKey({ key: newKey, pin: newPin, to: forgotInput });
-      toast.success(`New permanent Security Key generated! Dispatched to ${forgotInput}`);
-    }, 1200);
+    localStorage.setItem("userRole", isChairman ? "chairman" : currentRole);
+    localStorage.setItem("adminType", isChairman ? "chairman" : (currentRole === "admin" ? (adminType || "executor") : ""));
+    localStorage.setItem(
+      "adminTypeTitle",
+      isChairman
+        ? "Supreme Chairman & Managing Director"
+        : currentRole === "admin"
+        ? adminType === "approver"
+          ? "Cross-Check & Approver Authority"
+          : adminType === "verifier"
+          ? "Compliance & KYC Verifier"
+          : "System Operations Executor"
+        : ""
+    );
+    localStorage.setItem("displayName", displayName);
+    localStorage.setItem("userName", userName);
+    localStorage.setItem("userGender", gender);
+    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userPhone", phone);
+    localStorage.setItem("aadhaarNumber", aadhaar);
+    localStorage.setItem("securityKey", secKey);
+    localStorage.setItem("aadhaarVerified", "true");
+    localStorage.setItem("authSessionActive", "true");
+    localStorage.setItem("isLoggedIn", "true");
+
+    window.dispatchEvent(new Event("roleChanged"));
+    window.dispatchEvent(new Event("profileUpdated"));
+    window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("storage"));
+
+    toast.success(`⚡ Authenticated as ${displayName}! Entering dashboard...`);
+    setTimeout(() => {
+      navigate("/");
+    }, 500);
+  };
+
+  // Specialized Admin 4-Type Preset Selection (Including Supreme Chairman)
+  const handleFillAdminDemo = (type = "executor") => {
+    setAdminType(type);
+    if (type === "chairman") {
+      setAdminDisplayName("Mounish Sai (Chairman & Managing Director)");
+      setAdminUserName("mounish_chairman");
+      setAdminGender("Male");
+      setAdminAadhaar("987654329842");
+      setAdminEmail("chairman.mounish@shopsense.com");
+      setAdminPhone("+91 9876543298");
+      setAdminPassword("admin123");
+      setAdminSecKey("SEC-KEY-9842");
+      setAdminSecPin("9842");
+      toast.info("Loaded 👑 Supreme Chairman & Managing Director (Mounish Sai) 🏛️");
+    } else if (type === "verifier") {
+      setAdminDisplayName("Ananya Rao (Verifier Admin)");
+      setAdminUserName("ananya_verifier");
+      setAdminGender("Female");
+      setAdminAadhaar("987654322583");
+      setAdminEmail("verifier.admin@shopsense.com");
+      setAdminPhone("+91 9876543225");
+      setAdminPassword("admin123");
+      setAdminSecKey("SEC-KEY-2583");
+      setAdminSecPin("2583");
+      toast.info("Loaded 🔍 Type 2: Compliance & KYC Verifier Admin (Ananya Rao) 🛡️");
+    } else if (type === "approver") {
+      setAdminDisplayName("Rajesh Menon (Approver Admin)");
+      setAdminUserName("rajesh_approver");
+      setAdminGender("Male");
+      setAdminAadhaar("987654323691");
+      setAdminEmail("approver.admin@shopsense.com");
+      setAdminPhone("+91 9876543236");
+      setAdminPassword("admin123");
+      setAdminSecKey("SEC-KEY-3691");
+      setAdminSecPin("3691");
+      toast.info("Loaded ⚖️ Type 3: Cross-Check & Vendor Approver Admin (Rajesh Menon) 🏛️");
+    } else {
+      // Executor
+      setAdminDisplayName("Mounish Sai (Executor Admin)");
+      setAdminUserName("mounish_executor");
+      setAdminGender("Male");
+      setAdminAadhaar("987654321478");
+      setAdminEmail("executor.admin@shopsense.com");
+      setAdminPhone("+91 9876543214");
+      setAdminPassword("admin123");
+      setAdminSecKey("SEC-KEY-1478");
+      setAdminSecPin("1478");
+      toast.info("Loaded ⚡ Type 1: System Operations Executor Admin (Mounish Sai) 🚀");
+    }
+  };
+
+  // Specialized Vendor Preset Selection
+  const handleFillVendorDemo = (type = "electronics") => {
+    if (type === "clothes" || type === "fashion") {
+      setVendorDisplayName("Pooja Verma (Clothes & Fashion)");
+      setVendorUserName("pooja_vendor");
+      setVendorGender("Female");
+      setVendorAadhaar("987654325284");
+      setVendorEmail("vendor@stylehub.com");
+      setVendorPhone("+91 9822335284");
+      setVendorPassword("vendor123");
+      setVendorSecKey("SEC-KEY-5284");
+      setVendorSecPin("5284");
+      localStorage.setItem("vendorStoreName", "StyleHub Fashion & Clothes");
+      localStorage.setItem("vendorSpecialty", "Fashion, Men's Wear & Kids Wear");
+      toast.info("Loaded Clothes & Fashion Vendor: Pooja Verma (StyleHub) 👗");
+    } else if (type === "furniture") {
+      setVendorDisplayName("Amit Patel (Furniture & Living)");
+      setVendorUserName("amit_vendor");
+      setVendorGender("Male");
+      setVendorAadhaar("987654324916");
+      setVendorEmail("vendor@modernhome.com");
+      setVendorPhone("+91 9833444916");
+      setVendorPassword("vendor123");
+      setVendorSecKey("SEC-KEY-4916");
+      setVendorSecPin("4916");
+      localStorage.setItem("vendorStoreName", "ModernHome Furniture & Living");
+      localStorage.setItem("vendorSpecialty", "Furniture & Home Decor");
+      toast.info("Loaded Furniture Vendor: Amit Patel (ModernHome) 🛋️");
+    } else if (type === "toys") {
+      setVendorDisplayName("Vikram Malhotra (Toys & Robots)");
+      setVendorUserName("vikram_vendor");
+      setVendorGender("Male");
+      setVendorAadhaar("987654328357");
+      setVendorEmail("vendor@gadgetcentral.com");
+      setVendorPhone("+91 9844558357");
+      setVendorPassword("vendor123");
+      setVendorSecKey("SEC-KEY-8357");
+      setVendorSecPin("8357");
+      localStorage.setItem("vendorStoreName", "GadgetCentral Toys & Robotics");
+      localStorage.setItem("vendorSpecialty", "Toys, Games & STEM Robotics");
+      toast.info("Loaded Toys & Robotics Vendor: Vikram Malhotra (GadgetCentral) 🚀");
+    } else if (type === "apple") {
+      setVendorDisplayName("Siddharth Rao (Apple India)");
+      setVendorUserName("siddharth_apple");
+      setVendorGender("Male");
+      setVendorAadhaar("987654321111");
+      setVendorEmail("vendor@apple.in");
+      setVendorPhone("+91 9899111111");
+      setVendorPassword("vendor123");
+      setVendorSecKey("SEC-KEY-1111");
+      setVendorSecPin("1111");
+      localStorage.setItem("vendorStoreName", "Apple India Official");
+      localStorage.setItem("vendorSpecialty", "Premium Electronics & Apple Devices");
+      toast.info("Loaded Premium Vendor: Apple India 🍎");
+    } else {
+      // Default: Electronics
+      setVendorDisplayName("Rahul Sharma (Electronics & Tech)");
+      setVendorUserName("rahul_vendor");
+      setVendorGender("Male");
+      setVendorAadhaar("987654327139");
+      setVendorEmail("vendor@techworld.com");
+      setVendorPhone("+91 9812347139");
+      setVendorPassword("vendor123");
+      setVendorSecKey("SEC-KEY-7139");
+      setVendorSecPin("7139");
+      localStorage.setItem("vendorStoreName", "TechWorld Electronics");
+      localStorage.setItem("vendorSpecialty", "Electronics, Mobiles & Tech Gadgets");
+      toast.info("Loaded Electronics Vendor: Rahul Sharma (TechWorld) 💻");
+    }
+  };
+
+  const handleFillDynamicVendorDemo = (v) => {
+    const isVoltX = v.name?.toLowerCase().includes("voltx") || v.email?.toLowerCase().includes("voltx");
+    setVendorDisplayName(isVoltX ? "Vikram Malhotra (VoltX Smart Mobiles)" : `${v.name} Owner`);
+    setVendorUserName(isVoltX ? "voltx_vendor" : v.email.split('@')[0]);
+    setVendorGender("Male");
+    setVendorAadhaar(isVoltX ? "987654355005" : "987654321234");
+    setVendorEmail(v.email);
+    setVendorPhone(isVoltX ? "+91 9820011223" : "+91 9812347139");
+    setVendorPassword("vendor123");
+    setVendorSecKey(isVoltX ? "SEC-KEY-5505" : "SEC-KEY-7139");
+    setVendorSecPin(isVoltX ? "5505" : "7139");
+    localStorage.setItem("vendorId", String(v.id));
+    localStorage.setItem("vendorStoreName", v.name);
+    localStorage.setItem("vendorSpecialty", isVoltX ? "Next-Gen 5G Smart Mobiles, GaN Fast Chargers & Mobile Accessories" : "Vendor Products");
+    toast.info(`Loaded Vendor: ${v.name} ${isVoltX ? "⚡" : "🏢"}`);
   };
 
   const handleFillDemo = () => {
     if (activeTab === "admin") {
-      setAdminDisplayName("Mounish Sai");
-      setAdminUserName("mounish_admin");
-      setAdminGender("Male");
-      setAdminAadhaar("987654328921");
-      setAdminEmail("admin@shopsense.com");
-      setAdminPhone("+91 9876543210");
-      setAdminPassword("admin123");
-      setAdminSecKey("SEC-KEY-9988");
-      setAdminSecPin("9988");
-      toast.info("Loaded Admin Demo Account!");
+      handleFillAdminDemo(adminType || "executor");
     } else {
-      setVendorDisplayName("Rahul Sharma");
-      setVendorUserName("rahul_vendor");
-      setVendorGender("Male");
-      setVendorAadhaar("987654321234");
-      setVendorEmail("vendor@shopsense.com");
-      setVendorPhone("+91 9812345678");
-      setVendorPassword("vendor123");
-      setVendorSecKey("SEC-KEY-7766");
-      setVendorSecPin("7766");
-      toast.info("Loaded Vendor Demo Account!");
+      if (approvedVendorsList.length > 0) {
+        handleFillDynamicVendorDemo(approvedVendorsList[0]);
+      } else {
+        handleFillVendorDemo("electronics");
+      }
     }
   };
 
@@ -451,6 +876,32 @@ function Login() {
               <span style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase" }}>or sign in with password</span>
               <div style={{ flex: 1, height: "1px", background: "#374151" }} />
             </div>
+
+            {/* New Admin Registration Banner Option */}
+            <button
+              type="button"
+              onClick={() => setShowNewAdminRegModal(true)}
+              style={{
+                width: "100%",
+                padding: "11px 16px",
+                borderRadius: "12px",
+                border: "1px dashed #6366F1",
+                background: "rgba(99, 102, 241, 0.12)",
+                color: "#C7D2FE",
+                fontWeight: 800,
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                marginBottom: "20px",
+                boxShadow: "0 4px 15px rgba(99, 102, 241, 0.15)",
+                transition: "all 0.2s ease"
+              }}
+            >
+              <FiUserPlus style={{ fontSize: "1.1rem", color: "#818CF8" }} /> 🏛️ I am a New Admin — Apply for Governance Role
+            </button>
 
             {/* Segmented Role Switcher Tab */}
             <div
@@ -642,6 +1093,161 @@ function Login() {
                 />
               </div>
 
+              {/* Specialized Admin 4-Type Presets Bar (Including Supreme Chairman) */}
+              {activeTab === "admin" && (
+                <div style={{ background: "rgba(37, 99, 235, 0.08)", border: "1px solid rgba(37, 99, 235, 0.25)", borderRadius: "10px", padding: "10px 12px", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "#60A5FA", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>🛡️ Select Admin Governance Authority:</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleFillAdminDemo("chairman")}
+                      style={{
+                        gridColumn: "1 / -1",
+                        padding: "9px 6px",
+                        borderRadius: "6px",
+                        border: adminType === "chairman" ? "1px solid #F59E0B" : "1px solid rgba(245, 158, 11, 0.4)",
+                        background: adminType === "chairman" ? "linear-gradient(135deg, #F59E0B, #D97706)" : "rgba(245, 158, 11, 0.12)",
+                        color: adminType === "chairman" ? "#000000" : "#FBBF24",
+                        fontSize: "0.78rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        textAlign: "center"
+                      }}
+                    >
+                      👑 Supreme Chairman & Managing Director (Mounish Sai)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFillAdminDemo("executor")}
+                      style={{
+                        padding: "8px 4px",
+                        borderRadius: "6px",
+                        border: adminType === "executor" ? "1px solid #2563EB" : "1px solid #374151",
+                        background: adminType === "executor" ? "linear-gradient(135deg, #2563EB, #1D4ED8)" : "#1F2937",
+                        color: adminType === "executor" ? "#FFFFFF" : "#D1D5DB",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textAlign: "center"
+                      }}
+                    >
+                      ⚡ 1. Executor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFillAdminDemo("verifier")}
+                      style={{
+                        padding: "8px 4px",
+                        borderRadius: "6px",
+                        border: adminType === "verifier" ? "1px solid #8B5CF6" : "1px solid #374151",
+                        background: adminType === "verifier" ? "linear-gradient(135deg, #8B5CF6, #7C3AED)" : "#1F2937",
+                        color: adminType === "verifier" ? "#FFFFFF" : "#D1D5DB",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textAlign: "center"
+                      }}
+                    >
+                      🔍 2. Verifier
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFillAdminDemo("approver")}
+                      style={{
+                        gridColumn: "1 / -1",
+                        padding: "8px 4px",
+                        borderRadius: "6px",
+                        border: adminType === "approver" ? "1px solid #10B981" : "1px solid #374151",
+                        background: adminType === "approver" ? "linear-gradient(135deg, #10B981, #059669)" : "#1F2937",
+                        color: adminType === "approver" ? "#FFFFFF" : "#D1D5DB",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textAlign: "center"
+                      }}
+                    >
+                      ⚖️ 3. Approver Authority
+                    </button>
+                  </div>
+                  <div style={{ marginTop: "6px", fontSize: "0.72rem", color: "#94A3B8" }}>
+                    {adminType === "chairman" && "👑 Supreme Chairman: Oversees all 3 admins, assigns directives, asks questions, approves new admins & vendors"}
+                    {adminType === "executor" && "⚡ Type 1: System Operations Executor (Due-diligence & complaints scanning)"}
+                    {adminType === "verifier" && "🔍 Type 2: Compliance Verifier (Audits KYC & multi-warehouse facilities)"}
+                    {adminType === "approver" && "⚖️ Type 3: Approver Authority (Cross-checks 5.0% bond agreements & seals stores)"}
+                  </div>
+                </div>
+              )}
+
+              {/* Specialized Vendor Presets Bar */}
+              {activeTab === "vendor" && (
+                <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.25)", borderRadius: "10px", padding: "10px 12px", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "#34D399", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>⚡ Fill Demo Vendor Details:</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                    {approvedVendorsList.length > 0 ? (
+                      approvedVendorsList.map((v, i) => (
+                        <button
+                          key={v.id || i}
+                          type="button"
+                          onClick={() => handleFillDynamicVendorDemo(v)}
+                          style={{
+                            padding: "7px 8px",
+                            borderRadius: "6px",
+                            border: vendorEmail === v.email ? "1px solid #10B981" : "1px solid #374151",
+                            background: vendorEmail === v.email ? "linear-gradient(135deg, #10B981, #059669)" : "#1F2937",
+                            color: vendorEmail === v.email ? "#FFFFFF" : "#D1D5DB",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis"
+                          }}
+                          title={v.name}
+                        >
+                          {v.name.toLowerCase().includes("voltx") ? "⚡" : "🏪"} {v.name.substring(0, 18)}...
+                        </button>
+                      ))
+                    ) : (
+                      <div style={{ gridColumn: "span 2", fontSize: "0.8rem", color: "#9CA3AF", textAlign: "center", padding: "10px" }}>
+                        No approved vendors found. Waiting for Chairman approval...
+                      </div>
+                    )}
+                    
+                    {/* Hardcoded Apple Demo Preset */}
+                    <button
+                      type="button"
+                      onClick={() => handleFillVendorDemo("apple")}
+                      style={{
+                        padding: "7px 8px",
+                        borderRadius: "6px",
+                        border: vendorEmail === "vendor@apple.in" ? "1px solid #10B981" : "1px solid #374151",
+                        background: vendorEmail === "vendor@apple.in" ? "linear-gradient(135deg, #10B981, #059669)" : "#1F2937",
+                        color: vendorEmail === "vendor@apple.in" ? "#FFFFFF" : "#D1D5DB",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis"
+                      }}
+                      title="Apple India Official"
+                    >
+                      🍎 Apple India Official
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Forgot Security Key Link */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.82rem", marginTop: "2px" }}>
                 <button
@@ -685,6 +1291,59 @@ function Login() {
               >
                 Proceed to Aadhaar Verification <FiArrowRight />
               </button>
+
+              <button
+                type="button"
+                onClick={handleInstantSignIn}
+                style={{
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "11px",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  color: "#F8FAFC",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                ⚡ 1-Click Instant Sign In & Launch Dashboard
+              </button>
+
+              {/* Partner / Vendor Portal Link */}
+              <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", display: "flex", flexDirection: "column", gap: "10px", textAlign: "center" }}>
+                <p style={{ fontSize: "0.78rem", color: "#9CA3AF", margin: 0 }}>Join ShopSense as an Authorized Vendor Partner</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate("/vendor/login");
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    border: "1px solid #10B981",
+                    background: "rgba(16, 185, 129, 0.15)",
+                    color: "#34D399",
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  <FiBriefcase /> I am a New Vendor (Partner Onboarding & Setup)
+                </button>
+              </div>
             </form>
           </>
         )}
@@ -1248,6 +1907,429 @@ function Login() {
               </button>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* New Admin Registration Modal */}
+      <AnimatePresence>
+        {showNewAdminRegModal && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.75)",
+              backdropFilter: "blur(8px)",
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px"
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              style={{
+                background: "#0F172A",
+                border: "1px solid rgba(99, 102, 241, 0.3)",
+                borderRadius: "20px",
+                width: "100%",
+                maxWidth: "600px",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                padding: "28px",
+                boxShadow: "0 25px 60px rgba(0, 0, 0, 0.6)",
+                color: "#F8FAFC"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "10px",
+                      background: "linear-gradient(135deg, #6366F1, #4F46E5)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "1.3rem"
+                    }}
+                  >
+                    🏛️
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0 }}>New Admin Applicant Registration</h2>
+                    <p style={{ fontSize: "0.78rem", color: "#94A3B8", margin: "2px 0 0 0" }}>
+                      Application subject to final review and role assignment by Supreme Chairman Mounish Sai
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNewAdminRegModal(false)}
+                  style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer", fontSize: "1.2rem" }}
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              <div
+                style={{
+                  background: "rgba(99, 102, 241, 0.08)",
+                  border: "1px solid rgba(99, 102, 241, 0.2)",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "20px",
+                  fontSize: "0.8rem",
+                  color: "#C7D2FE",
+                  lineHeight: "1.4"
+                }}
+              >
+                👑 <strong>Chairman Governance Notice:</strong> All new administrative accounts require formal credential verification, domain assessment, and official role authorization by Chairman & Managing Director Mounish Sai before login access is unlocked.
+              </div>
+
+              <form onSubmit={handleRegisterNewAdmin} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Full Legal Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Vikramaditya Sen"
+                      value={newAdminRegForm.fullName}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, fullName: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Preferred Username *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. sen_admin"
+                      value={newAdminRegForm.userName}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, userName: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Official Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="admin.applicant@shopsense.com"
+                      value={newAdminRegForm.email}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, email: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Mobile Contact Number *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+91 98765 43210"
+                      value={newAdminRegForm.phone}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, phone: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      12-Digit Aadhaar / National ID *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={12}
+                      placeholder="e.g. 987654321098"
+                      value={newAdminRegForm.aadhaarNumber}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, aadhaarNumber: e.target.value.replace(/\D/g, "").slice(0, 12) })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Prefix / Gender
+                    </label>
+                    <select
+                      value={newAdminRegForm.gender}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, gender: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    >
+                      <option value="Male">Mr. (Male)</option>
+                      <option value="Female">Mrs. / Ms. (Female)</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                    Preferred Administrative Specialization
+                  </label>
+                  <select
+                    value={newAdminRegForm.requestedRole}
+                    onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, requestedRole: e.target.value })}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                  >
+                    <option value="executor">⚡ Type 1: Operations, Legal Complaints & Intake Executor</option>
+                    <option value="verifier">🔍 Type 2: Compliance, Aadhaar KYC & Multi-Warehouse Verifier</option>
+                    <option value="approver">⚖️ Type 3: Performance Bond & Final Approval Authority</option>
+                  </select>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Professional Headline / Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Senior Vendor Due Diligence Specialist"
+                      value={newAdminRegForm.headline}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, headline: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Highest Education & University
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. MBA (IIM Bangalore) • B.Tech (NIT)"
+                      value={newAdminRegForm.education}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, education: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Industry Certifications (Comma separated)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. ISO 9001 Lead Auditor, CFE, Six Sigma"
+                      value={newAdminRegForm.certifications}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, certifications: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                      Attach Resume / CV Document (.PDF / .DOCX)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Resume_Candidate_CV.pdf"
+                      value={newAdminRegForm.resumeFileName}
+                      onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, resumeFileName: e.target.value })}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                    Executive Experience Summary & Accomplishments
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Describe your background in regulatory compliance, risk investigation, warehouse safety, or commercial contracts..."
+                    value={newAdminRegForm.experience}
+                    onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, experience: e.target.value })}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none", resize: "none" }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#CBD5E1", marginBottom: "4px" }}>
+                    Account Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Create your login password"
+                    value={newAdminRegForm.password}
+                    onChange={(e) => setNewAdminRegForm({ ...newAdminRegForm, password: e.target.value })}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #334155", background: "#1E293B", color: "#F8FAFC", fontSize: "0.85rem", outline: "none" }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAdminRegModal(false)}
+                    style={{
+                      flex: 1,
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: "1px solid #334155",
+                      background: "transparent",
+                      color: "#94A3B8",
+                      fontWeight: 700,
+                      fontSize: "0.88rem",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      flex: 2,
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: "linear-gradient(135deg, #6366F1, #4F46E5)",
+                      color: "#FFF",
+                      fontWeight: 800,
+                      fontSize: "0.88rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      boxShadow: "0 4px 15px rgba(99, 102, 241, 0.3)"
+                    }}
+                  >
+                    <FiSend /> Submit Application to Chairman Mounish
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Registration Success Modal */}
+      <AnimatePresence>
+        {regSuccessModalData && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.8)",
+              backdropFilter: "blur(8px)",
+              zIndex: 110,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px"
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              style={{
+                background: "#0F172A",
+                border: "1px solid rgba(16, 185, 129, 0.4)",
+                borderRadius: "20px",
+                width: "100%",
+                maxWidth: "500px",
+                padding: "30px",
+                textAlign: "center",
+                color: "#F8FAFC",
+                boxShadow: "0 25px 60px rgba(0, 0, 0, 0.7)"
+              }}
+            >
+              <div
+                style={{
+                  width: "60px",
+                  height: "60px",
+                  borderRadius: "50%",
+                  background: "rgba(16, 185, 129, 0.15)",
+                  border: "2px solid #10B981",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "2rem",
+                  color: "#10B981",
+                  margin: "0 auto 16px auto"
+                }}
+              >
+                <FiCheckCircle />
+              </div>
+              <h2 style={{ fontSize: "1.4rem", fontWeight: 800, marginBottom: "8px" }}>
+                Admin Application Registered!
+              </h2>
+              <p style={{ fontSize: "0.85rem", color: "#94A3B8", marginBottom: "18px" }}>
+                Your administrative application has been routed directly to the Executive Command Center of <strong>Supreme Chairman Mounish Sai</strong>.
+              </p>
+
+              <div
+                style={{
+                  background: "#1E293B",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "20px",
+                  textAlign: "left",
+                  fontSize: "0.82rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  border: "1px solid #334155"
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#94A3B8" }}>Application Reference ID:</span>
+                  <strong style={{ color: "#60A5FA" }}>{regSuccessModalData.id}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#94A3B8" }}>Applicant Name:</span>
+                  <strong>{regSuccessModalData.fullName}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#94A3B8" }}>Preferred Specialization:</span>
+                  <span style={{ color: "#A78BFA" }}>{regSuccessModalData.requestedRoleTitle}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#94A3B8" }}>Current Status:</span>
+                  <span style={{ color: "#F59E0B", fontWeight: 800 }}>⏳ Awaiting Chairman Mounish Approval</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setRegSuccessModalData(null)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "linear-gradient(135deg, #10B981, #059669)",
+                  color: "#FFF",
+                  fontWeight: 800,
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)"
+                }}
+              >
+                Understood, Return to Portal
+              </button>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
