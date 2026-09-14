@@ -18,7 +18,9 @@ build/
 npm-debug.log*
 
 # Database & Environment
-*.db
+*.db-shm
+*.db-wal
+.env
 .env.local
 .env.*.local
 
