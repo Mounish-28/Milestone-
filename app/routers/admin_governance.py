@@ -692,24 +692,33 @@ def chairman_final_approve(app_ref: str, data: schemas.Stage4ChairmanApprovalReq
         target_vendor_id = existing_vendor.id
 
     # Automatically seed starter catalog for the new approved vendor
+    seed_starter_catalog = None
     try:
-        from catalog_generator import seed_starter_catalog_for_new_vendor
-    except ImportError:
+        from catalog_generator import seed_starter_catalog_for_new_vendor as seed_starter_catalog
+    except Exception:
         try:
-            from app.catalog_generator import seed_starter_catalog_for_new_vendor
-        except ImportError:
-            from ..catalog_generator import seed_starter_catalog_for_new_vendor
+            from app.catalog_generator import seed_starter_catalog_for_new_vendor as seed_starter_catalog
+        except Exception:
+            try:
+                import sys, os
+                parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if parent_dir not in sys.path:
+                    sys.path.insert(0, parent_dir)
+                from catalog_generator import seed_starter_catalog_for_new_vendor as seed_starter_catalog
+            except Exception:
+                seed_starter_catalog = None
 
-    try:
-        seed_starter_catalog_for_new_vendor(
-            vendor_id=target_vendor_id,
-            store_name=app_record.store_name,
-            category=app_record.category or "General Goods",
-            description=app_record.description or "",
-            db=db
-        )
-    except Exception as e:
-        print(f"[CHAIRMAN SEED ERROR] {e}")
+    if seed_starter_catalog is not None:
+        try:
+            seed_starter_catalog(
+                vendor_id=target_vendor_id,
+                store_name=app_record.store_name,
+                category=app_record.category or "General Goods",
+                description=app_record.description or "",
+                db=db
+            )
+        except Exception as e:
+            print(f"[CHAIRMAN SEED ERROR] {e}")
 
     db.commit()
     db.refresh(app_record)
