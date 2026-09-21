@@ -22,7 +22,9 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=True, default="+91 9876543210")
     role = Column(String, nullable=False, default="vendor")  # admin / vendor
-    security_key = Column(String, nullable=False)  # Mandatory permanent security key
+    security_key = Column(String, nullable=False)  # Mandatory 24-hour rotating security key
+    security_key_updated_at = Column(DateTime, default=datetime.utcnow)
+    security_key_expires_at = Column(DateTime, nullable=True)
     is_aadhaar_verified = Column(Boolean, default=False)
     is_online = Column(Boolean, default=True)  # Vendor online status
 

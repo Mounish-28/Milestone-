@@ -25,6 +25,24 @@ SessionLocal = sessionmaker(
 )
 Base = declarative_base()
 
+def ensure_users_security_columns():
+    """Idempotently ensures security key rotation columns exist on SQLite database."""
+    try:
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            if "sqlite" in DATABASE_URL:
+                res = conn.execute(text("PRAGMA table_info(users)"))
+                cols = [row[1] for row in res.fetchall()]
+                if cols:
+                    if "security_key_updated_at" not in cols:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN security_key_updated_at DATETIME"))
+                    if "security_key_expires_at" not in cols:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN security_key_expires_at DATETIME"))
+    except Exception:
+        pass
+
+ensure_users_security_columns()
+
 def get_db():
     db = SessionLocal()
     try:

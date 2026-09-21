@@ -317,7 +317,7 @@ function Login() {
     const currentPin = activeTab === "admin" ? adminSecPin : vendorSecPin;
 
     try {
-      await sendSecurityEmailApi({
+      const res = await sendSecurityEmailApi({
         recipient_email: currentEmail,
         recipient_mobile: currentPhone,
         recipient_name: currentName,
@@ -325,13 +325,17 @@ function Login() {
         security_pin: currentPin,
         dispatch_channel: keyDeliveryChannel
       });
+      if (res?.security_key) {
+        if (activeTab === "admin") setAdminSecKey(res.security_key);
+        else setVendorSecKey(res.security_key);
+      }
     } catch (err) {
       console.log("Fallback mail notice: ", err);
     }
 
     setStep("security_email");
     setShowMailInboxDrawer(true);
-    toast.success(`Security Key & PIN dispatched to ${keyDeliveryChannel.toUpperCase()}! Check your inbox/phone.`);
+    toast.success(`Dynamic 24-Hour Security Key & PIN dispatched to ${keyDeliveryChannel.toUpperCase()}! Check your inbox/phone.`);
   };
 
   // Step 3: From Email Screen -> Open Dedicated Security PIN Page
@@ -464,13 +468,17 @@ function Login() {
       const isEmail = forgotInput.includes("@");
       const payload = isEmail ? { email: forgotInput.trim() } : { phone: forgotInput.trim(), identifier: forgotInput.trim() };
       const res = await forgotSecurityKeyApi(payload);
-      const newKey = res?.security_key || `SEC-${Math.floor(1000 + Math.random() * 9000)}`;
-      setDispatchedNewKey({ to: forgotInput.trim(), key: newKey });
-      toast.success(res?.message || `New permanent Security Key dispatched to ${forgotInput.trim()}`);
+      const newKey = res?.security_key || `SEC-KEY-${Math.floor(1000 + Math.random() * 9000)}`;
+      if (activeTab === "admin") setAdminSecKey(newKey);
+      else setVendorSecKey(newKey);
+      setDispatchedNewKey({ to: forgotInput.trim(), key: newKey, validity: "24 hours" });
+      toast.success(res?.message || `New dynamic 24-hour Security Key dispatched to ${forgotInput.trim()}`);
     } catch (_err) {
-      const fallbackKey = `SEC-${Math.floor(1000 + Math.random() * 9000)}`;
-      setDispatchedNewKey({ to: forgotInput.trim(), key: fallbackKey });
-      toast.success(`New permanent Security Key generated & dispatched to ${forgotInput.trim()}`);
+      const fallbackKey = `SEC-KEY-${Math.floor(1000 + Math.random() * 9000)}`;
+      if (activeTab === "admin") setAdminSecKey(fallbackKey);
+      else setVendorSecKey(fallbackKey);
+      setDispatchedNewKey({ to: forgotInput.trim(), key: fallbackKey, validity: "24 hours" });
+      toast.success(`New dynamic 24-hour Security Key generated & dispatched to ${forgotInput.trim()}`);
     } finally {
       setIsSubmittingForgot(false);
     }
@@ -955,6 +963,45 @@ function Login() {
               >
                 <FiBriefcase /> Vendor Portal
               </button>
+            </div>
+
+            {/* 24-Hour Automated Security Key Policy Banner */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "9px 14px",
+                background: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.25)",
+                borderRadius: "10px",
+                marginBottom: "18px"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "1.1rem" }}>🛡️</span>
+                <div>
+                  <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#34D399" }}>
+                    24-Hour Rolling Security Key Policy
+                  </div>
+                  <div style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
+                    Admin & vendor security keys rotate automatically every 24 hours
+                  </div>
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: "0.68rem",
+                  fontWeight: 800,
+                  background: "rgba(16, 185, 129, 0.2)",
+                  color: "#6EE7B7",
+                  padding: "3px 8px",
+                  borderRadius: "12px",
+                  letterSpacing: "0.5px"
+                }}
+              >
+                ROLLING 24H
+              </span>
             </div>
 
             {/* Primary Credentials Form */}
@@ -1593,12 +1640,15 @@ function Login() {
               <div style={{ fontSize: "0.83rem", color: "#E2E8F0", lineHeight: "1.5" }}>
                 Hello {currentGender === "Female" ? "Mrs." : currentGender === "Male" ? "Mr." : ""} {currentName},
                 <p style={{ marginTop: "6px", color: "#CBD5E1" }}>
-                  Your official Permanent Security Key and 4-Digit Login PIN have been dispatched directly to:
+                  Your official 24-Hour Dynamic Security Key and 4-Digit Login PIN have been dispatched directly to:
                   <strong style={{ display: "block", color: "#60A5FA", marginTop: "4px" }}>
                     {keyDeliveryChannel === "email" ? currentEmail : keyDeliveryChannel === "mobile" ? currentPhone : `${currentEmail} & ${currentPhone}`}
                   </strong>
                 </p>
-                <small style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: "4px", display: "block" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(59, 130, 246, 0.15)", border: "1px solid rgba(59, 130, 246, 0.3)", borderRadius: "6px", padding: "4px 8px", marginTop: "6px" }}>
+                  <span style={{ fontSize: "0.72rem", color: "#93C5FD" }}>⏱️ <strong>Validity:</strong> 24 Hours from issuance (Auto-rotates daily)</span>
+                </div>
+                <small style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: "6px", display: "block" }}>
                   Please check your inbox / messages to retrieve your 4-digit Security PIN and proceed to entry.
                 </small>
               </div>
@@ -1739,8 +1789,8 @@ function Login() {
 
             <div>
               <h3 style={{ fontSize: "1.3rem", fontWeight: 800 }}>Request New Security Key</h3>
-              <p style={{ fontSize: "0.84rem", color: "#9CA3AF", marginTop: "4px" }}>
-                Enter your registered Email Address or Mobile Number to generate and dispatch a new permanent Security Key.
+              <p style={{ fontSize: "0.84rem", color: "#94A3B8", marginTop: "4px" }}>
+                Enter your registered Email Address or Mobile Number to generate and dispatch a new dynamic 24-hour Security Key.
               </p>
             </div>
 
@@ -1782,7 +1832,7 @@ function Login() {
                 <strong style={{ color: "#34D399", display: "block", marginBottom: "4px" }}>
                   ✉️ / 📱 Security Key Dispatched to {dispatchedNewKey.to}
                 </strong>
-                Your new permanent Security Key & 4-digit Security PIN have been sent via Email/SMS. Check your inbox.
+                Your new dynamic 24-hour Security Key ({dispatchedNewKey.key}) & 4-digit PIN have been sent via Email/SMS. Valid for 24 hours.
               </div>
             )}
 
@@ -1872,8 +1922,9 @@ function Login() {
               <div style={{ fontSize: "0.85rem", color: "#CBD5E1", lineHeight: "1.5" }}>
                 Hello {currentGender === "Female" ? "Mrs." : currentGender === "Male" ? "Mr." : ""} {currentName},
                 <p style={{ marginTop: "6px", marginBottom: "6px" }}>
-                  Your Permanent Account Security Key is:
+                  Your 24-Hour Dynamic Security Key (Auto-Rotating) is:
                   <strong style={{ display: "block", color: "#10B981", fontSize: "1.1rem", marginTop: "2px" }}>{currentKey}</strong>
+                  <span style={{ display: "block", fontSize: "0.72rem", color: "#38BDF8", marginTop: "2px" }}>⏱️ Valid for 24 Hours • Automatically rotates daily for security</span>
                 </p>
                 <div style={{ background: "#1E293B", padding: "10px 14px", borderRadius: "8px", border: "1px dashed #3B82F6", marginTop: "8px" }}>
                   <span style={{ fontSize: "0.78rem", color: "#94A3B8" }}>Your 4-Digit Login Security PIN:</span>

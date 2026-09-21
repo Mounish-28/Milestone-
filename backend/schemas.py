@@ -60,11 +60,25 @@ class UserResponse(BaseModel):
     phone: str | None = None
     role: str
     security_key: str
+    security_key_updated_at: datetime | None = None
+    security_key_expires_at: datetime | None = None
+    key_hours_remaining: float | None = 24.0
     is_aadhaar_verified: bool
     is_online: bool
 
     class Config:
         from_attributes = True
+
+
+class SecurityKeyStatusResponse(BaseModel):
+    email: str
+    role: str
+    security_key: str
+    is_expired: bool
+    security_key_updated_at: datetime | None = None
+    security_key_expires_at: datetime | None = None
+    hours_remaining: float
+    message: str
 
 
 # ----------------------------
