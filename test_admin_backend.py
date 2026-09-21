@@ -1,10 +1,33 @@
+import os
 import sys
 import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 
+import httpx
 from httpx import Client
 
-client = Client(base_url="http://127.0.0.1:8000", timeout=10.0)
+# Auto-fallback to in-process ASGITransport if live uvicorn is not running
+client = None
+try:
+    live_client = Client(base_url="http://127.0.0.1:8000", timeout=1.0)
+    res = live_client.get("/health")
+    if res.status_code == 200:
+        client = live_client
+        print("🔗 Connected to live Admin Backend on http://127.0.0.1:8000")
+except Exception:
+    pass
+
+if client is None:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    if BASE_DIR not in sys.path:
+        sys.path.insert(0, BASE_DIR)
+    import app.main as admin_main
+    from fastapi.testclient import TestClient
+    client = TestClient(admin_main.app, base_url="http://127.0.0.1:8000")
+    print("🚀 In-process TestClient initialized for Admin Backend")
 
 print("==================================================")
 print("🧪 TESTING ADMIN GOVERNANCE & CLEARANCE DESK BACKEND")

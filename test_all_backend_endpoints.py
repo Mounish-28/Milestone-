@@ -1,15 +1,85 @@
+import os
 import urllib.request
 import urllib.error
 import json
 import sys
 import io
+import socket
 
 try:
     sys.stdout.reconfigure(encoding='utf-8')
 except Exception:
     pass
 
+def is_port_open(host, port, timeout=0.8):
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+# Initialize fallback TestClients if ports are not live
+admin_client = None
+if is_port_open("127.0.0.1", 8000):
+    print("🔗 Port 8000 is LIVE - testing over HTTP")
+else:
+    print("🚀 Port 8000 is offline - using in-process TestClient for Admin Backend")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    if BASE_DIR not in sys.path:
+        sys.path.insert(0, BASE_DIR)
+    import app.main as admin_main
+    from fastapi.testclient import TestClient
+    admin_client = TestClient(admin_main.app, base_url="http://127.0.0.1:8000")
+
+cust_client = None
+if is_port_open("127.0.0.1", 8001):
+    print("🔗 Port 8001 is LIVE - testing over HTTP")
+else:
+    print("🚀 Port 8001 is offline - using in-process TestClient for Customer Backend")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    cb_dir = os.path.join(BASE_DIR, "customer-backend")
+    if cb_dir not in sys.path:
+        sys.path.insert(0, cb_dir)
+    import importlib.util
+    spec_cb = importlib.util.spec_from_file_location("cb_main", os.path.join(cb_dir, "main.py"))
+    cb_main = importlib.util.module_from_spec(spec_cb)
+    spec_cb.loader.exec_module(cb_main)
+    from fastapi.testclient import TestClient
+    cust_client = TestClient(cb_main.app, base_url="http://127.0.0.1:8001")
+
 def test_endpoint(srv_name, method, url, data=None):
+    if ":8000" in url and admin_client is not None:
+        path = url.split(":8000", 1)[1]
+        try:
+            res = admin_client.request(method, path, json=data)
+            status = res.status_code
+            body = res.text
+            if status == 200:
+                print(f"[OK] [{srv_name}] {method} {url} -> 200 OK | {str(body)[:80]}")
+                return True, 200, None
+            else:
+                print(f"[FAIL] [{srv_name}] {method} {url} -> HTTP {status} | {str(body)[:120]}")
+                return False, status, body
+        except Exception as e:
+            print(f"[FAIL] [{srv_name}] {method} {url} -> Error: {e}")
+            return False, None, str(e)
+
+    if ":8001" in url and cust_client is not None:
+        path = url.split(":8001", 1)[1]
+        try:
+            res = cust_client.request(method, path, json=data)
+            status = res.status_code
+            body = res.text
+            if status == 200:
+                print(f"[OK] [{srv_name}] {method} {url} -> 200 OK | {str(body)[:80]}")
+                return True, 200, None
+            else:
+                print(f"[FAIL] [{srv_name}] {method} {url} -> HTTP {status} | {str(body)[:120]}")
+                return False, status, body
+        except Exception as e:
+            print(f"[FAIL] [{srv_name}] {method} {url} -> Error: {e}")
+            return False, None, str(e)
+
     req = urllib.request.Request(url, method=method)
     if data is not None:
         req.add_header('Content-Type', 'application/json')

@@ -13,11 +13,11 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
-    from app.database import SessionLocal, engine, Base
-    from app import models
-except ImportError:
     from database import SessionLocal, engine, Base
     import models
+except ImportError:
+    from app.database import SessionLocal, engine, Base
+    from app import models
 
 REAL_CATALOG = {json.dumps(products, indent=4)}
 
@@ -53,6 +53,8 @@ def seed_database():
         print(f"Error seeding products: {{e}}")
     finally:
         db.close()
+
+seed_all_real_world_products = seed_database
 
 if __name__ == "__main__":
     seed_database()

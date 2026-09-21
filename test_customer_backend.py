@@ -1,10 +1,37 @@
+import os
 import sys
 import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 
+import httpx
 from httpx import Client
 
-client = Client(base_url="http://127.0.0.1:8001", timeout=10.0)
+# Auto-fallback to in-process TestClient if live uvicorn is not running
+client = None
+try:
+    live_client = Client(base_url="http://127.0.0.1:8001", timeout=1.0)
+    res = live_client.get("/health")
+    if res.status_code == 200:
+        client = live_client
+        print("🔗 Connected to live Customer Backend on http://127.0.0.1:8001")
+except Exception:
+    pass
+
+if client is None:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    cb_dir = os.path.join(BASE_DIR, "customer-backend")
+    if cb_dir not in sys.path:
+        sys.path.insert(0, cb_dir)
+    import importlib.util
+    spec_cb = importlib.util.spec_from_file_location("cb_main", os.path.join(cb_dir, "main.py"))
+    cb_main = importlib.util.module_from_spec(spec_cb)
+    spec_cb.loader.exec_module(cb_main)
+    from fastapi.testclient import TestClient
+    client = TestClient(cb_main.app, base_url="http://127.0.0.1:8001")
+    print("🚀 In-process TestClient initialized for Customer Backend")
 
 print("==================================================")
 print("TESTING CUSTOMER BACKEND (PORT 8001)")
