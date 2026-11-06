@@ -333,3 +333,31 @@
 .ai-input-form button:not(:disabled):hover {
   transform: scale(1.05);
 }
+
+.quick-prompts-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  background: #0F172A;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.quick-prompts-row button {
+  background: #1E293B;
+  color: #CBD5E1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-prompts-row button:hover {
+  background: #6366F1;
+  color: #FFFFFF;
+  border-color: #6366F1;
+}
+

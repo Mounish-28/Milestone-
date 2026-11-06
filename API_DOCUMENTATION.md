@@ -1,5 +1,5 @@
 # 📖 ShopSense Multi-Vendor Analytics Platform - API Documentation
-## Milestones 1, 2, 3, 4 & 5 Complete Specification
+## Complete API Specification
 
 The **ShopSense API** is an enterprise-grade REST and WebSocket API built with **FastAPI**. It includes automatic OpenAPI schema generation, interactive Swagger UI (`/docs`), ReDoc (`/redoc`), and rich Pydantic schemas.
 
@@ -14,7 +14,7 @@ The **ShopSense API** is an enterprise-grade REST and WebSocket API built with *
 
 ---
 
-## 🤖 Milestone 5: Autonomous AI Agent & Weekly Store Strategy
+## 🤖 Autonomous AI Agent & Weekly Store Strategy
 
 ### 1. Run Autonomous Weekly Store Analysis (LangGraph Workflow)
 * **Method**: `POST`

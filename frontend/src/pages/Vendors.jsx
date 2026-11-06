@@ -469,7 +469,7 @@ function Vendors() {
   const [cancelledFilter, setCancelledFilter] = useState("ALL");
 
   // =========================================================================
-  // Milestone 5: Autonomous AI Agent Copilot & Strategic Advisory State
+  // Autonomous AI Agent Copilot & Strategic Advisory State
   // =========================================================================
   const [aiAgentLoading, setAiAgentLoading] = useState(false);
   const [aiAgentReport, setAiAgentReport] = useState(null);
@@ -2265,7 +2265,7 @@ function Vendors() {
           </span>
         </button>
 
-        {/* Milestone 5: Autonomous AI Store Copilot Tab */}
+        {/* Autonomous AI Store Copilot Tab */}
         <button
           onClick={() => {
             setActiveMainTab("ai_agent");
@@ -2307,7 +2307,7 @@ function Vendors() {
               letterSpacing: "0.5px"
             }}
           >
-            Milestone 5
+            LangGraph AI
           </span>
         </button>
       </div>
@@ -3571,7 +3571,7 @@ function Vendors() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: AUTONOMOUS AI AGENT STORE COPILOT (MILESTONE 5)                     */}
+      {/* TAB 4: AUTONOMOUS AI AGENT STORE COPILOT                                  */}
       {/* ========================================================================= */}
       {activeMainTab === "ai_agent" && (
         <div>
@@ -3604,7 +3604,7 @@ function Vendors() {
                       boxShadow: "0 2px 10px rgba(139, 92, 246, 0.4)"
                     }}
                   >
-                    Milestone 5 • LangGraph
+                    Autonomous • LangGraph
                   </span>
                 </div>
                 <p style={{ fontSize: "0.88rem", color: "#94A3B8", margin: 0, maxWidth: "720px", lineHeight: "1.5" }}>
@@ -3877,7 +3877,7 @@ function Vendors() {
                   </div>
                 </div>
 
-                {/* CORE STRATEGIC ADVISORY: DISCOUNT DIRECTIVES (MILESTONE 5 EXACT REQUIREMENT) */}
+                {/* CORE STRATEGIC ADVISORY: DISCOUNT DIRECTIVES */}
                 <div
                   style={{
                     background: "#0F172A",

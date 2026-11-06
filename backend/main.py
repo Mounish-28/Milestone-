@@ -214,7 +214,7 @@ seed_initial_database()
 tags_metadata = [
     {
         "name": "Autonomous AI Shopping & Business Agent",
-        "description": "Milestone 5: LangGraph autonomous multi-step store auditor, weekly strategic discount directives (e.g., discounting high inventory with dropping demand), proactive executive email dispatch, cart optimizer, voice parser, and vendor/admin copilots.",
+        "description": "LangGraph autonomous multi-step store auditor, weekly strategic discount directives (e.g., discounting high inventory with dropping demand), proactive executive email dispatch, cart optimizer, voice parser, and vendor/admin copilots.",
     },
     {
         "name": "Admin Governance & 3-Tier Clearance Desk",
@@ -278,7 +278,7 @@ app = FastAPI(
     * **Milestone 2 (Inventory Intelligence & Analytics)**: Stock tracking, low-stock alerts, SQL customer segmentation, rule-based recommendations, and LLM review sentiment.
     * **Milestone 3 (Advanced APIs & Reporting)**: Analytics charts formatting, marketplace benchmarking, CSV/PDF data exports, WebSockets real-time sales feed, RAG AI Shopping Assistant, Text-to-SQL Data Analyst.
     * **Milestone 4 (Optimization, Testing & Deployment)**: Multi-container Dockerization, Comprehensive OpenAPI/Swagger documentation, Pytest unit/integration test suites, and GitHub Actions CI/CD automation.
-    * **Milestone 5 (Autonomous AI Agent & Cloud Deployment)**: LangGraph autonomous weekly vendor store auditing, proactive strategic discount directives for stagnant inventory, automated executive email dispatch, PostgreSQL cloud compatibility, and Render/AWS deployment blueprints.
+    * **Autonomous AI Agent & Cloud Deployment**: LangGraph autonomous weekly vendor store auditing, proactive strategic discount directives for stagnant inventory, automated executive email dispatch, PostgreSQL cloud compatibility, and Render/AWS deployment blueprints.
     """,
     version="5.0.0",
     openapi_tags=tags_metadata,

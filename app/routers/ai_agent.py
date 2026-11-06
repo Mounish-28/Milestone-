@@ -233,7 +233,7 @@ def run_autonomous_shopping_agent(payload: schemas.AgentShoppingTaskRequest, db:
     return {
         "status": "success",
         "goal": prompt,
-        "agent_model": "ShopSense Gemini Flash 3.6 Autonomous Agent",
+        "agent_model": "ShopSense Gemini Flash 3.8 Autonomous Agent",
         "execution_steps": execution_steps,
         "winning_recommendation": winner,
         "all_evaluated_candidates": evaluated_candidates,
@@ -451,7 +451,7 @@ def run_vendor_copilot(payload: schemas.VendorCopilotRequest, db: Session = Depe
         "status": "success",
         "vendor_id": vendor_id,
         "store_name": vendor.store_name if vendor else f"Vendor #{vendor_id}",
-        "copilot_model": "ShopSense Gemini Flash 3.6 Vendor Copilot",
+        "copilot_model": "ShopSense Gemini Flash 3.8 Vendor Copilot",
         "inventory_intelligence": {
             "total_products_managed": len(products),
             "stockout_alerts": low_stock_items,
@@ -489,7 +489,7 @@ def run_admin_copilot(payload: schemas.AdminCopilotRequest, db: Session = Depend
 
     return {
         "status": "success",
-        "copilot_model": "ShopSense Gemini Flash 3.6 Admin Executive Copilot",
+        "copilot_model": "ShopSense Gemini Flash 3.8 Admin Executive Copilot",
         "platform_health": {
             "total_gross_revenue": total_rev,
             "total_transactions": tx_count,
@@ -548,7 +548,7 @@ def _build_html_email(vendor_name: str, report_ref: str, period: str, strategic_
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #0f172a;">
   <div style="max-width: 680px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
     <div style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); padding: 28px 32px; color: #ffffff;">
-      <div style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Autonomous AI Store Copilot • Milestone 5</div>
+      <div style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Autonomous AI Store Copilot • LangGraph AI</div>
       <h1 style="margin: 6px 0 4px 0; font-size: 24px; font-weight: 800;">Weekly Store Strategic Intelligence Brief</h1>
       <div style="font-size: 14px; opacity: 0.95;">Prepared for: <strong>{vendor_name}</strong> | Reference: {report_ref} | Period: {period}</div>
     </div>
@@ -848,12 +848,12 @@ def _run_langgraph_weekly_analysis(vendor_id: int, db: Session, lookback_days: i
 @router.post(
     "/weekly-vendor-analysis",
     response_model=schemas.WeeklyVendorReportResponse,
-    summary="Run Autonomous Weekly Store Analysis (Milestone 5)",
+    summary="Run Autonomous Weekly Store Analysis",
     description="Executes the LangGraph autonomous multi-step agent workflow to analyze store telemetry, diagnose high inventory with dropping demand, formulate strategic discount advice, and compile proactive executive emails."
 )
 def run_weekly_vendor_analysis(payload: schemas.WeeklyVendorAnalysisRequest, db: Session = Depends(get_db)):
     """
-    Milestone 5: Autonomous AI Agent Workflow (LangGraph StateGraph).
+    Autonomous AI Agent Workflow (LangGraph StateGraph).
     Analyzes vendor store, generates strategic advice (discounting dead inventory, restocking fast sellers),
     calculates financial projections, and compiles/dispatches proactive weekly executive briefing email.
     """

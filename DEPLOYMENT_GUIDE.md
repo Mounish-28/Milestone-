@@ -1,5 +1,5 @@
 # 🚀 ShopSense Multi-Vendor Analytics Platform - Deployment Guide
-## Milestone 4 & Milestone 5: Production Deployment & Containerization
+## Production Deployment & Containerization
 
 ShopSense is packaged as a multi-tier microservice architecture that can be deployed across local containers, cloud VM instances (AWS EC2), and modern managed platforms (Render, Railway, Fly.io, Heroku) with PostgreSQL or SQLite.
 

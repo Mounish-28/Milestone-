@@ -454,7 +454,7 @@ export const checkHealth = async () => {
 };
 
 // =========================================================================
-// Milestone 5: Autonomous AI Agent Weekly Store Audit & Strategic Advisory
+// Autonomous AI Agent Weekly Store Audit & Strategic Advisory
 // =========================================================================
 export const runWeeklyVendorAnalysisApi = async (payload) => {
   const response = await api.post("/ai-agent/weekly-vendor-analysis", payload);
